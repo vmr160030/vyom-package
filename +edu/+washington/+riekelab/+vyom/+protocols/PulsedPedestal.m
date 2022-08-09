@@ -1,14 +1,14 @@
 classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
-        preTime = 250                   % Stimulus leading duration (ms)
-        stimTime = 1500                  % Stimulus duration (ms)
+        preTime = 500                   % Stimulus leading duration (ms)
+        stimTime = 100                  % Stimulus duration (ms)
         tailTime = 500                  % Stimulus trailing duration (ms)
         gridWidth = 300                 % Width of mapping grid (microns)
         stixelSize = 250                % Stixel edge size (microns)
         separationSize = 14             % Separation between squares 
-        contrast = 0.5                  % Contrast (0 - 1)
-        contrastDiff = 1.6              % Differential contrast of test square
+        contrasts = [-0.3527   -0.1083    0.1362    0.3806    0.6250]                  % Contrast (0 - 1)
+        %contrastDiffs = 1.6              % Differential contrast of test square
         chromaticClass = 'achromatic'   % Chromatic type
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         onlineAnalysis = 'extracellular' % Online analysis type.
@@ -22,11 +22,16 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         stixelSizePix
         gridWidthPix
         separationSizePix
+        idxContrast=1
+        contrast
         intensity
-        stimContrast
+        testIntensity
+        stimContrast        
+        testStimContrast
         positions
         position
         numChecks
+        testSquareIdx
     end
     
     methods
@@ -72,16 +77,14 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
-            % Choose square with different intensity
-            idx_test_square = randi(4);
             idx_square = 1;
 
             rect = stage.builtin.stimuli.Rectangle();
             rect.size = obj.stixelSizePix*ones(1,2);
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 1];
             rect.orientation = 0;
-            if idx_square==idx_test_square
-                rect.color = obj.intensity*obj.contrastDiff;
+            if idx_square==obj.testSquareIdx
+                rect.color = obj.testIntensity;
             else
                 rect.color = obj.intensity;
             end
@@ -99,8 +102,8 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[-1 1]...
                 + [-obj.stixelSizePix 0];
             rect.orientation = 0;
-            if idx_square==idx_test_square
-                rect.color = obj.intensity*obj.contrastDiff;
+            if idx_square==obj.testSquareIdx
+                rect.color = obj.testIntensity;
             else
                 rect.color = obj.intensity;
             end
@@ -116,8 +119,8 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 -1]...
                 + [0 -obj.stixelSizePix];
             rect.orientation = 0;
-            if idx_square==idx_test_square
-                rect.color = obj.intensity*obj.contrastDiff;
+            if idx_square==obj.testSquareIdx
+                rect.color = obj.testIntensity;
             else
                 rect.color = obj.intensity;
             end
@@ -133,8 +136,8 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[-1 -1]...
                 + [-obj.stixelSizePix -obj.stixelSizePix];
             rect.orientation = 0;
-            if idx_square==idx_test_square
-                rect.color = obj.intensity*obj.contrastDiff;
+            if idx_square==obj.testSquareIdx
+                rect.color = obj.testIntensity;
             else
                 rect.color = obj.intensity;
             end
@@ -143,50 +146,68 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
             @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
             p.addController(barVisible);
-            
-            
         end
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             
-            if mod(obj.numEpochsCompleted,2) == 0
-                obj.stimContrast = obj.contrast;
-            else
-                obj.stimContrast = -obj.contrast;
-            end
+              %obj.stimContrast = randsample(obj.contrasts, 1);
+              %tol = 0.0001;
+              %testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
+              %obj.testStimContrast = randsample(testContrasts, 1);
+              
+              % Cycle through contrasts and test square contrasts
+              obj.stimContrast = obj.contrasts(obj.idxContrast);
+              tol = 0.0001;
+              testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
+              obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
+              if mod(obj.numEpochsCompleted,length(testContrasts))==1
+                 obj.idxContrast = mod(obj.idxContrast+1, length(obj.contrasts))+1;
+              end
+              
+%             if mod(obj.numEpochsCompleted,2) == 0
+%                 obj.stimContrast = obj.contrast;
+%             else
+%                 obj.stimContrast = -obj.contrast;
+%             end
             
             % Check the chromatic class
-            if strcmp(obj.chromaticClass, 'BY') % blue-yellow
-                if obj.stimContrast > 0
-                    flashColor = 'blue';
-                    obj.intensity = [0,0,obj.contrast]*obj.backgroundIntensity + obj.backgroundIntensity;
-                else
-                    flashColor = 'yellow';
-                    obj.intensity = [obj.contrast*ones(1,2),0]*obj.backgroundIntensity + obj.backgroundIntensity;
-                end
-            elseif strcmp(obj.chromaticClass, 'RG') % red-green
-                if obj.stimContrast > 0
-                    flashColor = 'red';
-                    obj.intensity = [obj.contrast,0,0]*obj.backgroundIntensity + obj.backgroundIntensity;
-                else
-                    flashColor = 'green';
-                    obj.intensity = [0,obj.contrast,0]*obj.backgroundIntensity + obj.backgroundIntensity;
-                end
+%             if strcmp(obj.chromaticClass, 'BY') % blue-yellow
+%                 if obj.stimContrast > 0
+%                     flashColor = 'blue';
+%                     obj.intensity = [0,0,obj.contrast]*obj.backgroundIntensity + obj.backgroundIntensity;
+%                 else
+%                     flashColor = 'yellow';
+%                     obj.intensity = [obj.contrast*ones(1,2),0]*obj.backgroundIntensity + obj.backgroundIntensity;
+%                 end
+%             elseif strcmp(obj.chromaticClass, 'RG') % red-green
+%                 if obj.stimContrast > 0
+%                     flashColor = 'red';
+%                     obj.intensity = [obj.contrast,0,0]*obj.backgroundIntensity + obj.backgroundIntensity;
+%                 else
+%                     flashColor = 'green';
+%                     obj.intensity = [0,obj.contrast,0]*obj.backgroundIntensity + obj.backgroundIntensity;
+%                 end
+%             else
+            obj.intensity = obj.stimContrast*obj.backgroundIntensity+obj.backgroundIntensity;
+            obj.testIntensity = obj.testStimContrast*obj.backgroundIntensity+obj.backgroundIntensity;
+            if obj.stimContrast > 0
+                flashColor = 'white';
             else
-                obj.intensity = obj.stimContrast*obj.backgroundIntensity + obj.backgroundIntensity;
-                if obj.stimContrast > 0
-                    flashColor = 'white';
-                else
-                    flashColor = 'black';
-                end
+                flashColor = 'black';
             end
+            %end
             
             obj.position = obj.positions(mod(floor(obj.numEpochsCompleted/2),length(obj.positions))+1,:);
+            % Choose square with different intensity
+            obj.testSquareIdx = randi(4);
             
+            epoch.addParameter('testSquareIdx',obj.testSquareIdx);
             epoch.addParameter('numChecks',obj.numChecks);
             epoch.addParameter('position', obj.position);
+            epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
             epoch.addParameter('stimContrast', obj.stimContrast);
+            epoch.addParameter('testStimContrast', obj.testStimContrast);
             epoch.addParameter('flashColor', flashColor);
         end
         
