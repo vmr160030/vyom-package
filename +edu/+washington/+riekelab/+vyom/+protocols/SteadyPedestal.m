@@ -1,4 +1,4 @@
-classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
+classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
         preTime = 500                   % Stimulus leading duration (ms)
