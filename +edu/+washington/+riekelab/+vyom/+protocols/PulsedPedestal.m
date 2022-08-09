@@ -28,9 +28,9 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         testIntensity
         stimContrast        
         testStimContrast
-        positions
-        position
-        numChecks
+        %positions
+        %position
+        %numChecks
         testSquareIdx
     end
     
@@ -43,33 +43,32 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
-            
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
             obj.separationSizePix = obj.rig.getDevice('Stage').um2pix(obj.separationSize);
             obj.gridWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gridWidth);
 
             % Get the number of checkers
-            edgeChecks = ceil(obj.gridWidthPix / obj.stixelSizePix);
-            obj.numChecks = edgeChecks^2;
-            [x,y] = meshgrid(linspace(-obj.stixelSizePix*edgeChecks/2+obj.stixelSizePix/2,obj.stixelSizePix*edgeChecks/2-obj.stixelSizePix/2,edgeChecks));
-            obj.positions = [x(:), y(:)];
+            %edgeChecks = ceil(obj.gridWidthPix / obj.stixelSizePix);
+            %obj.numChecks = edgeChecks^2;
+            %[x,y] = meshgrid(linspace(-obj.stixelSizePix*edgeChecks/2+obj.stixelSizePix/2,obj.stixelSizePix*edgeChecks/2-obj.stixelSizePix/2,edgeChecks));
+            %obj.positions = [x(:), y(:)];
             
             % Online analysis figures
-            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
+            %obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
             
-            if ~strcmp(obj.onlineAnalysis, 'none')
-                obj.showFigure('manookinlab.figures.MeanResponseFigure', ...
-                    obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
-                    'sweepColor',[0,0,0],...
-                    'groupBy',{'frameRate'});
-                
-                obj.showFigure('manookinlab.figures.FlashMapperFigure', ...
-                    obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
-                    'preTime',obj.preTime,...
-                    'stimTime',obj.stimTime,...
-                    'stixelSize',obj.stixelSize,...
-                    'gridWidth',obj.gridWidth);
-            end
+%             if ~strcmp(obj.onlineAnalysis, 'none')
+%                 obj.showFigure('manookinlab.figures.MeanResponseFigure', ...
+%                     obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
+%                     'sweepColor',[0,0,0],...
+%                     'groupBy',{'frameRate'});
+%                 
+%                 obj.showFigure('manookinlab.figures.FlashMapperFigure', ...
+%                     obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
+%                     'preTime',obj.preTime,...
+%                     'stimTime',obj.stimTime,...
+%                     'stixelSize',obj.stixelSize,...
+%                     'gridWidth',obj.gridWidth);
+%             end
         end
         
         function p = createPresentation(obj)
@@ -161,8 +160,8 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
               tol = 0.0001;
               testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
               obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
-              if mod(obj.numEpochsCompleted,length(testContrasts))==1
-                 obj.idxContrast = mod(obj.idxContrast+1, length(obj.contrasts))+1;
+              if mod(obj.numEpochsCompleted,length(testContrasts))==0
+                 obj.idxContrast = mod(obj.idxContrast, length(obj.contrasts))+1;
               end
               
 %             if mod(obj.numEpochsCompleted,2) == 0
@@ -198,13 +197,13 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             end
             %end
             
-            obj.position = obj.positions(mod(floor(obj.numEpochsCompleted/2),length(obj.positions))+1,:);
+            %obj.position = obj.positions(mod(floor(obj.numEpochsCompleted/2),length(obj.positions))+1,:);
             % Choose square with different intensity
             obj.testSquareIdx = randi(4);
             
             epoch.addParameter('testSquareIdx',obj.testSquareIdx);
-            epoch.addParameter('numChecks',obj.numChecks);
-            epoch.addParameter('position', obj.position);
+            %epoch.addParameter('numChecks',obj.numChecks);
+            %epoch.addParameter('position', obj.position);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
             epoch.addParameter('stimContrast', obj.stimContrast);
             epoch.addParameter('testStimContrast', obj.testStimContrast);

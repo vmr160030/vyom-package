@@ -75,10 +75,10 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
                     rect.orientation = 0;
                     rect.color = obj.intensity;
                     p.addStimulus(rect);
-                    barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-                    @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
                     %barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-                    %@(state)state.time >= 0 && state.time < (obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
+                    %@(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
+                    barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
+                    @(state)state.time >= 0 && state.time < (obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
                     p.addController(barVisible);
                 end
            end
