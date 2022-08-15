@@ -116,13 +116,15 @@ classdef FlashedGratingOffset < edu.washington.riekelab.protocols.RiekeLabStageP
         
 
         function prepareEpoch(obj, epoch)
-%             disp('Started prepare epoch')
+            disp('Started prepare epoch')
             prepareEpoch@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj, epoch);
+
             device = obj.rig.getDevice(obj.amp);
 
             duration = (obj.preTime + obj.stimTime + obj.tailTime) / 1e3;
 
             epoch.addDirectCurrentStimulus(device, device.background, duration, obj.sampleRate);
+
             epoch.addResponse(device);
 
 
@@ -130,15 +132,21 @@ classdef FlashedGratingOffset < edu.washington.riekelab.protocols.RiekeLabStageP
             evenInd = mod(obj.numEpochsCompleted,2);
 
             if evenInd == 1 %even, show null
+
                 obj.stimulusTag = 'intensity';
+
             elseif evenInd == 0 %odd, show grating
+
                 obj.stimulusTag = 'image';
+
             end
 
             obj.stimulusTag = 'image';
 
-           
+            
+
             offsetInd = mod(obj.numEpochsCompleted,length(obj.phaseOffset))+1;
+
             obj.currentPhaseOffset = obj.phaseOffset(offsetInd);
 
             
@@ -172,13 +180,14 @@ obj.currentSurroundContrast = obj.surroundContrast;
         
 
         function p = createPresentation(obj)  
-%             disp('Started creating presentation')
+            disp('Started creating presentation')
             canvasSize = obj.rig.getDevice('Stage').getCanvasSize();
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
 
             apertureDiameterPix = obj.rig.getDevice('Stage').um2pix(obj.apertureDiameter);
             annulusInnerDiameterPix = obj.rig.getDevice('Stage').um2pix(obj.annulusInnerDiameter);
+
             annulusOuterDiameterPix = obj.rig.getDevice('Stage').um2pix(obj.annulusOuterDiameter);
 
          %keyboard
