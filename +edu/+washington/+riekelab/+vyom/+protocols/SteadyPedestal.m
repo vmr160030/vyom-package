@@ -1,7 +1,7 @@
 classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
-        preTime = 500                   % Stimulus leading duration (ms)
+        preTime = 60000                   % Stimulus leading duration (ms)
         flashTime = 50                     % Stimulus duration (ms) 16, 33, 66, 133 ms in Pokorny (1997)
         preFlashTime = 700              %
         postFlashTime = 700
@@ -13,7 +13,7 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
         chromaticClass = 'achromatic'   % Chromatic type
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         onlineAnalysis = 'extracellular' % Online analysis type.
-        numberOfAverages = uint16(5)  % Number of epochs
+        numberOfAverages = uint16(50)  % Number of epochs
     end
     
     properties (Hidden)
@@ -85,13 +85,13 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
 %                     end
                     
                     barColor = stage.builtin.controllers.PropertyController(rect, 'color', ...
-                        @(state)setContrast(obj, state.time - obj.preTime*1e-3));
+                        @(state)setContrast(obj, state.time-obj.preTime*1e-3));
 %                     %barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
 %                     %@(state)state.time >= 0 && state.time < (obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
                     p.addController(barColor);
-                    barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-                    @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-                    p.addController(barVisible);
+                    %barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
+                    %@(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
+                    %p.addController(barVisible);
                 else
                     rect = stage.builtin.stimuli.Rectangle();
                     rect.size = obj.stixelSizePix*ones(1,2);
@@ -101,11 +101,11 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
                     rect.orientation = 0;
                     rect.color = obj.intensity;
                     p.addStimulus(rect);
-                    barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-                    @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
+                    %barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
+                    %@(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
                     %barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
                     %@(state)state.time >= obj.preTime && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-                    p.addController(barVisible);
+                    %p.addController(barVisible);
                 end
            end
            
@@ -146,7 +146,7 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
               tol = 0.0001;
               testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
               obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
-              if mod(obj.numEpochsCompleted,length(testContrasts))==0
+              if mod(obj.numEpochsCompleted+1,length(testContrasts))==0
                  obj.idxContrast = mod(obj.idxContrast, length(obj.contrasts))+1;
               end
               

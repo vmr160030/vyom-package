@@ -160,7 +160,7 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
               tol = 0.0001;
               testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
               obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
-              if mod(obj.numEpochsCompleted,length(testContrasts))==0
+              if mod(obj.numEpochsCompleted+1,length(testContrasts))==0
                  obj.idxContrast = mod(obj.idxContrast, length(obj.contrasts))+1;
               end
               
