@@ -1,7 +1,7 @@
 classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
-        preTime = 60000                   % Stimulus leading duration (ms)
+        preTime = 2000                   % Stimulus leading duration (ms)
         flashTime = 50                     % Stimulus duration (ms) 16, 33, 66, 133 ms in Pokorny (1997)
         preFlashTime = 700              %
         postFlashTime = 700
@@ -146,7 +146,9 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
               tol = 0.0001;
               testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
               obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
-              if mod(obj.numEpochsCompleted+1,length(testContrasts))==0
+              % Cycle through test contrasts 10 times for adaptation before
+              % switching to next pedestal contrast
+              if mod(obj.numEpochsCompleted+1,length(testContrasts)*10)==0
                  obj.idxContrast = mod(obj.idxContrast, length(obj.contrasts))+1;
               end
               
