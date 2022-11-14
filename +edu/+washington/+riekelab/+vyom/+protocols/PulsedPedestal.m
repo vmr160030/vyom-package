@@ -80,7 +80,8 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
 
             rect = stage.builtin.stimuli.Rectangle();
             rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 1];
+            rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 1] + ...
+                obj.stixelSizePix*0.5*[1 1];
             rect.orientation = 0;
             if idx_square==obj.testSquareIdx
                 rect.color = obj.testIntensity;
@@ -99,7 +100,7 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             rect = stage.builtin.stimuli.Rectangle();
             rect.size = obj.stixelSizePix*ones(1,2);
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[-1 1]...
-                + [-obj.stixelSizePix 0];
+                + [-obj.stixelSizePix 0] + obj.stixelSizePix*0.5*[1 1];
             rect.orientation = 0;
             if idx_square==obj.testSquareIdx
                 rect.color = obj.testIntensity;
@@ -116,7 +117,7 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             rect = stage.builtin.stimuli.Rectangle();
             rect.size = obj.stixelSizePix*ones(1,2);
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 -1]...
-                + [0 -obj.stixelSizePix];
+                + [0 -obj.stixelSizePix] + obj.stixelSizePix*0.5*[1 1];
             rect.orientation = 0;
             if idx_square==obj.testSquareIdx
                 rect.color = obj.testIntensity;
@@ -133,7 +134,7 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             rect = stage.builtin.stimuli.Rectangle();
             rect.size = obj.stixelSizePix*ones(1,2);
             rect.position = obj.canvasSize/2 + obj.separationSizePix*[-1 -1]...
-                + [-obj.stixelSizePix -obj.stixelSizePix];
+                + [-obj.stixelSizePix -obj.stixelSizePix] + obj.stixelSizePix*0.5*[1 1];
             rect.orientation = 0;
             if idx_square==obj.testSquareIdx
                 rect.color = obj.testIntensity;
