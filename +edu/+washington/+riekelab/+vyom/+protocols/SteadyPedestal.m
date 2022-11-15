@@ -98,7 +98,8 @@ classdef SteadyPedestal < manookinlab.protocols.ManookinLabStageProtocol
                     rect.size = obj.stixelSizePix*ones(1,2);
                     rect.position = obj.canvasSize/2 + ...
                         obj.separationSizePix*arr_pos(idx_square, :) + ...
-                        arr_delta_pos(idx_square, :);
+                        arr_delta_pos(idx_square, :) + ...
+                        obj.stixelSizePix*0.5*[1 1];
                     rect.orientation = 0;
                     rect.color = obj.intensity;
                     p.addStimulus(rect);
