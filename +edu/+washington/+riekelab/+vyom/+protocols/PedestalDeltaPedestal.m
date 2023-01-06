@@ -164,8 +164,8 @@ classdef PedestalDeltaPedestal < manookinlab.protocols.ManookinLabStageProtocol
               
               obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
               
-              flashContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol &&...
-                                             abs(obj.contrasts-obj.testStimContrast)>tol);
+              flashContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
+              flashContrasts = flashContrasts(abs(flashContrasts-obj.testStimContrast)>tol);
               obj.stimFlashContrast = flashContrasts(obj.idxFlashContrast);
               
               
