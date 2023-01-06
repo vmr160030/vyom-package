@@ -30,8 +30,7 @@ classdef variableMeanDriftingGrating < edu.washington.riekelab.protocols.RiekeLa
         end
         
         function prepareRun(obj)
-            prepareRun@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj); 
-            
+            prepareRun@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);            
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
             obj.showFigure('edu.washington.riekelab.turner.figures.FrameTimingFigure',...
                obj.rig.getDevice('Stage'), obj.rig.getDevice('Frame Monitor'));
@@ -43,21 +42,6 @@ classdef variableMeanDriftingGrating < edu.washington.riekelab.protocols.RiekeLa
 %                 'onlineAnalysis',obj.onlineAnalysis,'coloredBy',obj.currentMeanIntensity);
         end
         
-        function prepareEpoch(obj, epoch)
-            prepareEpoch@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj, epoch);
-            device = obj.rig.getDevice(obj.amp);
-            duration = obj.stimTime/1e3;
-            epoch.addDirectCurrentStimulus(device, device.background, duration, obj.sampleRate);
-            epoch.addResponse(device);
-            
-            meanLumIndex = numel(obj.meanIntensities)-rem(obj.numEpochsPrepared,length(obj.meanIntensities));
-            barWidthIndex=  numel(obj.barWidths)-rem(((obj.numEpochsCompleted-mod(obj.numEpochsCompleted, ...
-                length(obj.barWidths)))/numel(obj.barWidths)+1),numel(obj.barWidths));
-            obj.currentBarWidth=obj.barWidths(barWidthIndex);
-            obj.currentMeanIntensity=obj.meanIntensities(meanLumIndex);
-            epoch.addParameter('currentMeanIntensity', obj.currentMeanIntensity);
-            epoch.addParameter('currentBarWdith', obj.currentBarWidth);
-        end
         
         function p = createPresentation(obj)
             p = stage.core.Presentation((obj.stimTime) * 1e-3);
@@ -119,6 +103,22 @@ classdef variableMeanDriftingGrating < edu.washington.riekelab.protocols.RiekeLa
                 phase = phase*180/pi + obj.phaseShift;
             end
             
+        end
+        
+        function prepareEpoch(obj, epoch)
+            prepareEpoch@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj, epoch);
+            device = obj.rig.getDevice(obj.amp);
+            duration = obj.stimTime/1e3;
+            epoch.addDirectCurrentStimulus(device, device.background, duration, obj.sampleRate);
+            epoch.addResponse(device);
+            
+            meanLumIndex = numel(obj.meanIntensities)-rem(obj.numEpochsPrepared,length(obj.meanIntensities));
+            barWidthIndex=  numel(obj.barWidths)-rem(((obj.numEpochsCompleted-mod(obj.numEpochsCompleted, ...
+                length(obj.barWidths)))/numel(obj.barWidths)+1),numel(obj.barWidths));
+            obj.currentBarWidth=obj.barWidths(barWidthIndex);
+            obj.currentMeanIntensity=obj.meanIntensities(meanLumIndex);
+            epoch.addParameter('currentMeanIntensity', obj.currentMeanIntensity);
+            epoch.addParameter('currentBarWdith', obj.currentBarWidth);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
