@@ -28,6 +28,7 @@ classdef PedestalDeltaPedestal < manookinlab.protocols.ManookinLabStageProtocol
         contrast
         intensity
         testIntensity
+        stimFlashIntensity
         stimContrast
         stimFlashContrast
         testStimContrast
