@@ -178,6 +178,8 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
             
             epoch.addParameter('seed', obj.seed);
             epoch.addParameter('numFrames', obj.numFrames);
+            epoch.addParameter('noiseFilterSD', obj.noiseFilterSD);
+            epoch.addParameter('noiseFilterSDPix', obj.noiseFilterSDPix);
         end
         
         function a = get.amp2(obj)
