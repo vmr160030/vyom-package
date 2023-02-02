@@ -5,7 +5,7 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
         stimTime = 10000                % Noise duration (ms)
         tailTime = 500                  % Noise trailing duration (ms)
         contrast = 1
-        %stixelSize = 60                 % Edge length of stixel (microns)
+        stixelSize = 10                 % Edge length of stixel (microns)
         %stepsPerStixel = 2              % Size of underling grid
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         frameDwell = uint16(1)          % Frame dwell.
@@ -14,8 +14,8 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
         chromaticClass = 'BY'   % Chromatic type
         onlineAnalysis = 'none'
         numberOfAverages = uint16(2)  % Number of epochs
-        noiseFilterSD = 2 % pixels, should it be um?
-        noiseContrast = 1;
+        noiseFilterSD = 30 % um
+        noiseContrast = 0.5;
     end
 
     properties (Hidden)
@@ -23,12 +23,16 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
         noiseClassType = symphonyui.core.PropertyType('char', 'row', {'binary', 'ternary', 'gaussian'})
         chromaticClassType = symphonyui.core.PropertyType('char','row',{'achromatic','RGB','BY'})
+        numXStixels
+        numYStixels
+        stixelSizePix
         seed
         numFrames
         imageMatrix
         maxWidthPix
         noiseStream
         noiseFilterSDPix
+        noiseFilterSDStix
         positionStream
         currentNoiseContrast
     end
@@ -52,7 +56,12 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
                 obj.maxWidthPix = obj.canvasSize; %min(obj.canvasSize);
             end
             
+            obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
+            % Calculate the number of X/Y checks.
+            obj.numXStixels = ceil(obj.maxWidthPix(1)/obj.stixelSizePix) + 1;
+            obj.numYStixels = ceil(obj.maxWidthPix(2)/obj.stixelSizePix) + 1;
             obj.noiseFilterSDPix = obj.rig.getDevice('Stage').um2pix(obj.noiseFilterSD);
+            obj.noiseFilterSDStix = obj.noiseFilterSDPix/obj.stixelSizePix;
             % Get the number of frames.
             obj.numFrames = floor(obj.stimTime * 1e-3 * obj.frameRate)+15;
         end
@@ -63,7 +72,7 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
 
-            obj.imageMatrix = obj.backgroundIntensity * ones(obj.maxWidthPix(2), obj.maxWidthPix(1));
+            obj.imageMatrix = obj.backgroundIntensity * ones(obj.numYStixels, obj.numXStixels);
             checkerboard = stage.builtin.stimuli.Image(uint8(obj.imageMatrix));
             checkerboard.position = obj.canvasSize / 2;
             checkerboard.size = obj.maxWidthPix;
@@ -131,15 +140,15 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
                 persistent M;
                 if frame > 0
                     if mod(frame, obj.frameDwell) == 0
-                        M = zeros(obj.maxWidthPix(2),obj.maxWidthPix(1),3);
+                        M = zeros(obj.numYStixels,obj.numXStixels,3);
 %                         tmpM = 2*obj.backgroundIntensity * ...
 %                             (obj.noiseStream.rand(obj.maxWidthPix(2),obj.maxWidthPix(1),2)>0.5);
 %                         tmpM = imgaussfilt(tmpM, obj.noiseFilterSD);
                         tmpM = obj.noiseStream.randn(size(M));
 %                         tmpM = imgaussfilt(tmpM, obj.noiseFilterSD);
-                        tmpM = imgaussfilt(tmpM, obj.noiseFilterSDPix);
+                        tmpM = imgaussfilt(tmpM, obj.noiseFilterSDStix);
                         tmpM = tmpM / std(tmpM(:));
-                        tmpM =  2*obj.backgroundIntensity * tmpM;
+                        tmpM =  obj.backgroundIntensity * obj.noiseContrast * tmpM + obj.backgroundIntensity;
                         M(:,:,1:2) = repmat(tmpM(:,:,1),[1,1,2]);
                         M(:,:,3) = tmpM(:,:,2);
                     end
@@ -180,6 +189,8 @@ classdef BlurNoise < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('numFrames', obj.numFrames);
             epoch.addParameter('noiseFilterSD', obj.noiseFilterSD);
             epoch.addParameter('noiseFilterSDPix', obj.noiseFilterSDPix);
+            epoch.addParameter('numXStixels', obj.numXStixels);
+            epoch.addParameter('numYStixels', obj.numYStixels);
         end
         
         function a = get.amp2(obj)
