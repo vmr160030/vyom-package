@@ -1,6 +1,8 @@
 classdef variableMeanDriftingGrating < edu.washington.riekelab.protocols.RiekeLabStageProtocol
     properties
         amp    % Output amplifier
+        preTime=0
+        tailTime=0
         stimTime = 60000                 % Stimulus duration (ms)
         spatialContrast = 0.9            % Center grating contrast (0-1)
         orientation = 0                 % Center orientation (deg)

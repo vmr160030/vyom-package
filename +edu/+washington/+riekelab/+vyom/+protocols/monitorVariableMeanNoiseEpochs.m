@@ -2,8 +2,8 @@ classdef monitorVariableMeanNoiseEpochs < edu.washington.riekelab.protocols.Riek
     
     properties
         preTime = 0 % ms
+        tailTime=0
         stimTime = 2000 % ms, change mean intensity every xxx
-        tailTime = 0 % ms
         apertureDiameter = 0 % um
         noiseStdv = 0.3 %contrast, as fraction of mean
         meanIntensity = [0.08 0.65]
