@@ -3,11 +3,11 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
         amp                             % Output amplifier
         RFmatfile = ''                % params.mat file with receptive field fits. Needs 'hull_parameters' [numcells x 5] matrix
         selectedCellsFile = ''            % .txt file with indices of cells to flash. Indexes hull_parameters.
-        preTime = 30                  % Stimulus leading duration (ms)
+        preTime = 50                  % Stimulus leading duration (ms)
         flashTime = 50                  %
         %preFlashTime = 0              %
         %postFlashTime = 0
-        tailTime = 30                  % Stimulus trailing duration (ms)
+        tailTime = 50                  % Stimulus trailing duration (ms)
         spotSizes = [0.5, 1.0, 1.5]                % Spot sizes in fractions of RF SD
         chromaticClass = 'achromatic'   % Chromatic type
         noiseGridSize = 30
@@ -109,7 +109,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
             obj.spotSize = obj.spotSizes(obj.idxSpotSize);
             obj.intensity = obj.spotIntensities(obj.idxIntensity);
             obj.idxCell = obj.cellsToFlash(obj.idxCell);
-            %disp(obj.idxCell);
+            d
             
             % Increment spot size index each epoch
             obj.idxSpotSize = mod(obj.numEpochsCompleted+1, obj.n_spotSizes)+1;
