@@ -2,19 +2,19 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
         RFmatfile = ''
-        preTime = 2000                  % Stimulus leading duration (ms)
+        preTime = 50                  % Stimulus leading duration (ms)
         flashTime = 50                  %
-        preFlashTime = 700              %
-        postFlashTime = 700
-        tailTime = 500                  % Stimulus trailing duration (ms)
-        gridWidth = 300                 % Width of mapping grid (microns)
-        spotSizes = [0.2, 0.5, 1.0, 2.0]                % Spot sizes in fractions of RF SD
+        %preFlashTime = 0              %
+        %postFlashTime = 0
+        tailTime = 50                  % Stimulus trailing duration (ms)
+        spotSizes = [0.5, 1.0, 1.5]                % Spot sizes in fractions of RF SD
         chromaticClass = 'achromatic'   % Chromatic type
-        noiseStixelSize = 60
+        noiseGridSize = 30
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         spotIntensities = [0.0, 1.0]    % Spot intensities
         onlineAnalysis = 'extracellular' % Online analysis type.
         numberOfRepeats = uint16(2)  % Number of repeats
+        % Add argument for text file list of cell indices to run through
     end
     
     properties (Hidden)
@@ -28,6 +28,11 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
         spotSize
         intensity
         RFs
+        numberOfAverages
+        numCells
+        n_spotSizes
+        n_intensities
+        n_spotsPerCell
     end
     
     properties (Dependent)
@@ -42,12 +47,19 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
-            prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
-            obj.gridWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gridWidth);
+            
             obj.RFs = load(obj.RFmatfile, 'hull_parameters');
-
+            obj.numCells = size(obj.RFs.hull_parameters, 1);
+            obj.numberOfAverages = obj.numberOfRepeats * obj.numCells * length(obj.spotSizes) * length(obj.spotIntensities);
+            
+            obj.n_spotSizes = length(obj.spotSizes);
+            obj.n_intensities = length(obj.spotIntensities);
+            obj.n_spotsPerCell = obj.n_spotSizes * obj.n_intensities;
+            
+            prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
+            
             % Convert RF centers and sigmas to microns then pixels
-            obj.RFs.hull_parameters(:, 1:4) = obj.rig.getDevice('Stage').um2pix(obj.RFs.hull_parameters(:, 1:4)*obj.noiseStixelSize);
+            obj.RFs.hull_parameters(:, 1:4) = obj.rig.getDevice('Stage').um2pix(obj.RFs.hull_parameters(:, 1:4)*obj.noiseGridSize);
         end
         
         function p = createPresentation(obj)
@@ -55,57 +67,56 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
-            disp('at start of presentation');
+            %disp('at start of presentation');
 
             spot = stage.builtin.stimuli.Ellipse(4096); % Ellipse with 4096 edges
-            spot.position = obj.hull_parameters(obj.idxCell, 1:2);
-            spot.radiusX = obj.hull_parameters(obj.idxCell, 3) * obj.spotSize;
-            spot.radiusY = obj.hull_parameters(obj.idxCell, 4) * obj.spotSize;
+            spot.position = obj.RFs.hull_parameters(obj.idxCell, 1:2);
+            spot.radiusX = obj.RFs.hull_parameters(obj.idxCell, 3) * obj.spotSize;
+            spot.radiusY = obj.RFs.hull_parameters(obj.idxCell, 4) * obj.spotSize;
             spot.color = obj.intensity;
-            spot.orientation = obj.hull_parameters(obj.idxCell, 5);
+            spot.orientation = obj.RFs.hull_parameters(obj.idxCell, 5);
 
             p.addStimulus(spot);
             spotVisible = stage.builtin.controllers.PropertyController(spot, 'visible', ...
             @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
             p.addController(spotVisible);
             
+            
+            if mod(obj.numEpochsCompleted+1,obj.n_spotsPerCell)==0                              
+               obj.idxCell = mod(obj.idxCell, obj.numCells)+1;
+            end
+            
         end
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
               
-              % Cycle through Spot sizes and intensities
-              obj.spotSize = obj.spotSizes(obj.idxSpotSize);
-              
-              % Cycle through test contrasts 10 times for adaptation before
-              % switching to next pedestal flash contrast
-              if mod(obj.numEpochsCompleted+1,length(obj.spotSizes)*5)==0
-                 % After each cycle of test contrasts                            
-                 obj.idxFlashContrast = mod(obj.idxFlashContrast, length(flashContrasts))+1;
-              end
-              
-              
-              
-            obj.intensity = obj.stimContrast*obj.backgroundIntensity+obj.backgroundIntensity;
-            obj.stimFlashIntensity = obj.stimFlashContrast*obj.backgroundIntensity+obj.backgroundIntensity;
-            obj.testIntensity = obj.testStimContrast*obj.backgroundIntensity+obj.backgroundIntensity;
-            if obj.stimContrast > 0
-                flashColor = 'white';
-            else
-                flashColor = 'black';
+            % Cycle through Spot sizes and intensities
+            obj.spotSize = obj.spotSizes(obj.idxSpotSize);
+            obj.intensity = obj.spotIntensities(obj.idxIntensity);
+            
+            obj.idxSpotSize = mod(obj.numEpochsCompleted+1, obj.n_spotSizes)+1;
+            
+            if mod(obj.numEpochsCompleted+1,obj.n_spotSizes)==0                              
+               obj.idxIntensity = mod(obj.idxIntensity, obj.n_intensities)+1;
             end
             
-            epoch.addParameter('testSquareIdx',obj.testSquareIdx);
+            
+            
+            
+            epoch.addParameter('spotSize',obj.spotSize);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
-            epoch.addParameter('stimContrast', obj.stimContrast);
-            epoch.addParameter('testStimContrast', obj.testStimContrast);
-            epoch.addParameter('flashColor', flashColor);
-            disp('Made it through prepare epoch')
+            epoch.addParameter('intensity', obj.intensity);
+            epoch.addParameter('idxCell', obj.idxCell);
+            %disp('Made it through prepare epoch')
         end
         
         function stimTime = get.stimTime(obj)
-            stimTime = obj.preFlashTime + obj.flashTime + obj.postFlashTime;
+            %stimTime = obj.preFlashTime + obj.flashTime + obj.postFlashTime;
+            stimTime = obj.flashTime;
+
         end
+        
         
         function tf = shouldContinuePreparingEpochs(obj)
             tf = obj.numEpochsPrepared < obj.numberOfAverages;
