@@ -1,7 +1,8 @@
 classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
-        RFmatfile = ''
+        RFmatfile = ''                % params.mat file with receptive field fits. Needs 'hull_parameters' [numcells x 5] matrix
+        selectedCells = ''            % .txt file with indices of cells to flash. Indexes hull_parameters.
         preTime = 50                  % Stimulus leading duration (ms)
         flashTime = 50                  %
         %preFlashTime = 0              %
@@ -81,7 +82,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
             @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
             p.addController(spotVisible);
             
-            
+            % Increment cell index once all spots flashed
             if mod(obj.numEpochsCompleted+1,obj.n_spotsPerCell)==0                              
                obj.idxCell = mod(obj.idxCell, obj.numCells)+1;
             end
@@ -95,14 +96,13 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
             obj.spotSize = obj.spotSizes(obj.idxSpotSize);
             obj.intensity = obj.spotIntensities(obj.idxIntensity);
             
+            % Increment spot size index each epoch
             obj.idxSpotSize = mod(obj.numEpochsCompleted+1, obj.n_spotSizes)+1;
             
+            % Increment intensity index when all spot sizes flashed
             if mod(obj.numEpochsCompleted+1,obj.n_spotSizes)==0                              
                obj.idxIntensity = mod(obj.idxIntensity, obj.n_intensities)+1;
             end
-            
-            
-            
             
             epoch.addParameter('spotSize',obj.spotSize);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
