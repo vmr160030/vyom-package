@@ -35,6 +35,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
         n_intensities
         n_spotsPerCell
         cellsToFlash
+        idxSelection=1
     end
     
     properties (Dependent)
@@ -56,6 +57,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
                 obj.numCells = length(obj.cellsToFlash);
                 disp('Flashing # cells:');
                 disp(obj.numCells);
+                obj.idxSelection=1;
             else
                 obj.numCells = size(obj.RFs.hull_parameters, 1);
                 obj.cellsToFlash = 1:obj.numCells;
@@ -97,7 +99,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
             
             % Increment cell index once all spots flashed
             if mod(obj.numEpochsCompleted+1,obj.n_spotsPerCell)==0                              
-               obj.idxCell = mod(obj.idxCell, obj.numCells)+1;
+               obj.idxSelection = mod(obj.idxSelection, obj.numCells)+1;
             end
             
         end
@@ -108,8 +110,10 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
             % Cycle through Spot sizes and intensities
             obj.spotSize = obj.spotSizes(obj.idxSpotSize);
             obj.intensity = obj.spotIntensities(obj.idxIntensity);
-            obj.idxCell = obj.cellsToFlash(obj.idxCell);
-            %disp(obj.idxCell);
+            disp(obj.idxSelection);
+            disp(obj.idxCell);
+            obj.idxCell = obj.cellsToFlash(obj.idxSelection)+1;
+            
             
             % Increment spot size index each epoch
             obj.idxSpotSize = mod(obj.numEpochsCompleted+1, obj.n_spotSizes)+1;
