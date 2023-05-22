@@ -45,6 +45,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
+            obj.numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
+            obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
+            
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             
             obj.showFigure('manookinlab.figures.ResponseFigure', obj.rig.getDevices('Amp'), ...
@@ -73,8 +76,8 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.blurIndex = 0;
 
             
-            obj.numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
-            obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
+            
+            disp('Prepared run');
         end
         
         function getImageSubject(obj)
@@ -233,13 +236,10 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
                 obj.blurIndex = 0;
                 if length(unique(obj.stimulusIndices)) > 1
                     % Set the current stimulus trajectory.
-                    obj.stimulusIndex = obj.stimulusIndices(mod(obj.numEpochsCompleted, numVariants) + 1);
+                    obj.stimulusIndex = obj.stimulusIndices(mod(obj.numEpochsCompleted, obj.numVariants) + 1);
                     obj.getImageSubject();
                 end
             end
-
-
-            
             
             % Save the parameters.
             epoch.addParameter('stimulusIndex', obj.stimulusIndex);
@@ -250,6 +250,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('currentStimSet',obj.currentStimSet);
             epoch.addParameter('pixIndex', obj.pixIndex);
             epoch.addParameter('blurIndex', obj.blurIndex);
+            disp('Prepared epoch');
         end
         
         % Same presentation each epoch in a run. Replay.
