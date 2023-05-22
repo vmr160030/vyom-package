@@ -94,14 +94,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.backgroundIntensity = mean(img(:));%set the mean to the mean over the image
             img = img.*255; %rescale s.t. brightest point is maximum monitor level
             obj.imageMatrix = uint8(img);
-
-            % If pixIndex or blurIndex is not 0, pixellate or blur image
-            if obj.pixIndex > 0
-                obj.imageMatrix = obj.pixellateImage(obj.imageMatrix, obj.pixSizes(obj.pixIndex));
-            end
-            if obj.blurIndex > 0
-                obj.imageMatrix = obj.blurImage(obj.imageMatrix, obj.blurSizes(obj.blurIndex));
-            end
             
             %get appropriate eye trajectories, at 200Hz
             if (obj.freezeFEMs) %freeze FEMs, hang on fixations
@@ -161,9 +153,19 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
+            
+            % If pixIndex or blurIndex is not 0, pixellate or blur image
+            img = obj.imageMatrix;
+            if obj.pixIndex > 0
+                img = obj.pixellateImage(img, obj.pixSizes(obj.pixIndex));
+            end
+            if obj.blurIndex > 0
+                img = obj.blurImage(img, obj.blurSizes(obj.blurIndex));
+            end
+            
             % Create your scene.
-            scene = stage.builtin.stimuli.Image(obj.imageMatrix);
-            scene.size = [size(obj.imageMatrix,2) size(obj.imageMatrix,1)]*obj.magnificationFactor;
+            scene = stage.builtin.stimuli.Image(img);
+            scene.size = [size(img,2) size(img,1)]*obj.magnificationFactor;
             p0 = obj.canvasSize/2;
             scene.position = p0;
             
