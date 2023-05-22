@@ -5,6 +5,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
         selectedCellsFile = ''            % .txt file with indices of cells to flash. Indexes hull_parameters.
         preTime = 30                  % Stimulus leading duration (ms)
         flashTime = 50                  %
+        str_fit_key = 'hull_parameters'    % Key for RF fit parameters in RFmatfile
         %preFlashTime = 0              %
         %postFlashTime = 0
         tailTime = 30                  % Stimulus trailing duration (ms)
@@ -50,7 +51,7 @@ classdef FlashRF < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
-            obj.RFs = load(obj.RFmatfile, 'hull_parameters');
+            obj.RFs = load(obj.RFmatfile, obj.str_fit_key);
             if obj.selectedCellsFile
                 fileID = fopen(obj.selectedCellsFile, 'r');
                 obj.cellsToFlash = fscanf(fileID, '%d');
