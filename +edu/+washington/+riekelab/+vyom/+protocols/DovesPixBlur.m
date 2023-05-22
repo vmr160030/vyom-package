@@ -49,14 +49,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
             
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
-            
-            obj.showFigure('manookinlab.figures.ResponseFigure', obj.rig.getDevices('Amp'), ...
-                'numberOfAverages', obj.numberOfAverages);
-            
-            obj.showFigure('manookinlab.figures.MeanResponseFigure', ...
-                obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
-                'sweepColor',[0 0 0]);
-            
             % Get the resources directory.
             obj.pkgDir = manookinlab.Package.getResourcePath();
             
