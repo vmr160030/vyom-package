@@ -12,10 +12,12 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         apertureDiameter = 2000         % Aperture diameter in pixels.
         freezeFEMs = false
         onlineAnalysis = 'extracellular'% Type of online analysis
-        numberOfAverages = uint16(48)   % Number of epochs
+        numberOfRepeats = uint16(50)   % Number of epochs
     end
     
     properties (Hidden)
+        numberOfAverages % Number of epochs
+        numVariants
         ampType
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
         imageMatrix
@@ -69,6 +71,10 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             % Set blur and pixellation index
             obj.pixIndex = -1;
             obj.blurIndex = 0;
+
+            
+            obj.numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
+            obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
         end
         
         function getImageSubject(obj)
@@ -218,8 +224,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             % Increment pix index till end of pix set, then increment blur
             % index and reset pix index
-            numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
-
             obj.pixIndex = obj.pixIndex + 1;
             if obj.pixIndex > length(obj.pixSizes)
                 obj.pixIndex = 0;
