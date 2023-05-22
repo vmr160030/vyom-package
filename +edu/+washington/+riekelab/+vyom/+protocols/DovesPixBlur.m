@@ -137,21 +137,24 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.magnificationFactor = round(1/60*200/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel'));
         end
 
-        function img = pixellateImage(obj, img, pixSize)
-            % Convert pixSize from microns to pixels.
-            pixSize = pixSize/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel');
+        function img = pixellateImage(obj, img, pixSizeMicrons)
+            % Convert pixSize from microns to VH pixels.
+            pixSizeArcmin = pixSizeMicrons / 3.3;
             
             % Pixellate the image.
-            img = imresize(img, pixSize*[1 1], 'nearest');
-            img = imresize(img, [1024 1536], 'nearest');
+            originalDims = size(img);
+            img = imresize(img, pixSizeArcmin*[1 1], 'nearest');
+            img = imresize(img, originalDims, 'nearest');
+            disp(originalDims);
+            disp(size(img));
         end
 
-        function img = blurImage(obj, img, blurSize)
+        function img = blurImage(obj, img, blurSizeMicrons)
             % Convert blurSize from microns to pixels.
-            blurSize = blurSize/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel');
+            blurSizeArcmin = blurSizeMicrons / 3.3;
             
             % Blur the image.
-            img = imgaussfilt(img, blurSize);
+            img = imgaussfilt(img, blurSizeArcmin);
         end
         
         function p = createPresentation(obj)
@@ -251,6 +254,11 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('pixIndex', obj.pixIndex);
             epoch.addParameter('blurIndex', obj.blurIndex);
             disp('Prepared epoch');
+            
+            % Display stim, pix, and blur indices
+            disp(['Stimulus index: ' num2str(obj.stimulusIndex)]);
+            disp(['Pix index: ' num2str(obj.pixIndex)]);
+            disp(['Blur index: ' num2str(obj.blurIndex)]);
         end
         
         % Same presentation each epoch in a run. Replay.
