@@ -135,10 +135,10 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             % Pixellate the image.
             originalDims = size(img);
-            img = imresize(img, pixSizeArcmin*[1 1], 'nearest');
+            downscaledDims = round(originalDims / pixSizeArcmin);
+
+            img = imresize(img, downscaledDims, 'nearest');
             img = imresize(img, originalDims, 'nearest');
-            disp(originalDims);
-            disp(size(img));
         end
 
         function img = blurImage(obj, img, blurSizeMicrons)
@@ -155,7 +155,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             
             % If pixIndex or blurIndex is not 0, pixellate or blur image
-            img = obj.imageMatrix;
+
+            % Create copy of image matrix
+            img = copy(obj.imageMatrix);
             if obj.pixIndex > 0
                 img = obj.pixellateImage(img, obj.pixSizes(obj.pixIndex));
             end
