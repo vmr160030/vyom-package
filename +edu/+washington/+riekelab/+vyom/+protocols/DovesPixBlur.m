@@ -21,6 +21,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         ampType
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
         imageMatrix
+        currImageMatrix
         backgroundIntensity
         xTraj
         yTraj
@@ -50,13 +51,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             
-            obj.showFigure('manookinlab.figures.ResponseFigure', obj.rig.getDevices('Amp'), ...
-                'numberOfAverages', obj.numberOfAverages);
-            
-            obj.showFigure('manookinlab.figures.MeanResponseFigure', ...
-                obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
-                'sweepColor',[0 0 0]);
-            
             % Get the resources directory.
             obj.pkgDir = manookinlab.Package.getResourcePath();
             
@@ -72,7 +66,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             end
 
             % Set blur and pixellation index
-            obj.pixIndex = -1;
+            obj.pixIndex = 0;
             obj.blurIndex = 0;
 
             
@@ -153,21 +147,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
-            
-            % If pixIndex or blurIndex is not 0, pixellate or blur image
-
-            % Create copy of image matrix
-            img = copy(obj.imageMatrix);
-            if obj.pixIndex > 0
-                img = obj.pixellateImage(img, obj.pixSizes(obj.pixIndex));
-            end
-            if obj.blurIndex > 0
-                img = obj.blurImage(img, obj.blurSizes(obj.blurIndex));
-            end
-            
             % Create your scene.
-            scene = stage.builtin.stimuli.Image(img);
-            scene.size = [size(img,2) size(img,1)]*obj.magnificationFactor;
+            scene = stage.builtin.stimuli.Image(obj.currImageMatrix);
+            scene.size = [size(obj.currImageMatrix,2) size(obj.currImageMatrix,1)]*obj.magnificationFactor;
             p0 = obj.canvasSize/2;
             scene.position = p0;
             
@@ -231,16 +213,30 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
+
+            % If pixIndex or blurIndex is not 0, pixellate or blur image
+            obj.currImageMatrix = obj.imageMatrix; % Create copy of image matrix
+            if obj.pixIndex > 0
+                obj.currImageMatrix = obj.pixellateImage(obj.currImageMatrix, obj.pixSizes(obj.pixIndex));
+            end
+            if obj.blurIndex > 0
+                obj.currImageMatrix = obj.blurImage(obj.currImageMatrix, obj.blurSizes(obj.blurIndex));
+            end
             
-            % Increment pix index till end of pix set, then increment blur
-            % index and reset pix index
+            % Increment pix index till end of pixSizes
             obj.pixIndex = obj.pixIndex + 1;
+            
+            % then increment blur index till end of blurSizes
             if obj.pixIndex > length(obj.pixSizes)
                 obj.pixIndex = 0;
                 obj.blurIndex = obj.blurIndex + 1;
             end
+
+            % then increment stimulus index and reset pix and blur indices
             if obj.blurIndex > length(obj.blurSizes)
+                obj.pixIndex = 1;
                 obj.blurIndex = 0;
+
                 if length(unique(obj.stimulusIndices)) > 1
                     % Set the current stimulus trajectory.
                     obj.stimulusIndex = obj.stimulusIndices(mod(obj.numEpochsCompleted, obj.numVariants) + 1);
