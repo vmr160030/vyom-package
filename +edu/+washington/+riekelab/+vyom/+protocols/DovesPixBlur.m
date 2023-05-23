@@ -18,6 +18,8 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
     properties (Hidden)
         numberOfAverages % Number of epochs
         numVariants
+        numBlurSizes
+        numPixSizes
         ampType
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
         imageMatrix
@@ -46,6 +48,8 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
+            obj.numBlurSizes = length(obj.blurSizes);
+            obj.numPixSizes = length(obj.pixSizes);
             obj.numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
             obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
             
@@ -67,9 +71,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             % Set blur and pixellation index
             obj.pixIndex = 0;
             obj.blurIndex = 0;
-
-            % Append length(blurSizes) 0's to pixSizes 
-            obj.pixSizes = [obj.pixSizes zeros(1,length(obj.blurSizes))];
 
             disp('Prepared run');
         end
@@ -123,7 +124,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.magnificationFactor = round(1/60*200/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel'));
         end
 
-        function img = pixellateImage(obj, img, pixSizeMicrons)
+        function pixellateImage(obj, img, pixSizeMicrons)
             % Convert pixSize from microns to VH pixels.
             pixSizeArcmin = pixSizeMicrons / 3.3;
             
@@ -134,6 +135,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
 
             img = imresize(img, downscaledDims, 'nearest');
             img = imresize(img, originalDims, 'nearest');
+            obj.currImageMatrix = img;
         end
 
         function img = blurImage(obj, img, blurSizeMicrons)
@@ -143,6 +145,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             % Blur the image.
             img = imgaussfilt(img, blurSizeArcmin);
+            obj.currImageMatrix = img;
         end
         
         function p = createPresentation(obj)
@@ -214,27 +217,26 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareEpoch(obj, epoch)
-            prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-
+            
             % If pixIndex or blurIndex is not 0, pixellate or blur image
             obj.currImageMatrix = obj.imageMatrix; % Create copy of image matrix
-            if obj.pixIndex > 0
-                obj.currImageMatrix = obj.pixellateImage(obj.currImageMatrix, obj.pixSizes(obj.pixIndex));
+            if obj.pixIndex > 0 && obj.blurIndex==0
+                obj.pixellateImage(obj.currImageMatrix, obj.pixSizes(obj.pixIndex));
             end
             if obj.blurIndex > 0
-                obj.currImageMatrix = obj.blurImage(obj.currImageMatrix, obj.blurSizes(obj.blurIndex));
+                obj.blurImage(obj.currImageMatrix, obj.blurSizes(obj.blurIndex));
             end
-            
+
             % Increment pix index till end of pixSizes
             obj.pixIndex = obj.pixIndex + 1;
             
             % then increment blur index till end of blurSizes
-            if obj.pixIndex > length(obj.pixSizes)
+            if obj.pixIndex > obj.numPixSizes
                 obj.blurIndex = obj.blurIndex + 1;
             end
 
             % then increment stimulus index and reset pix and blur indices
-            if obj.blurIndex > length(obj.blurSizes)
+            if obj.blurIndex > obj.numBlurSizes
                 obj.pixIndex = 0;
                 obj.blurIndex = 0;
 
@@ -244,7 +246,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
                     obj.getImageSubject();
                 end
             end
-            
+            prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             % Save the parameters.
             epoch.addParameter('stimulusIndex', obj.stimulusIndex);
             epoch.addParameter('imageName', obj.imageName);
