@@ -13,6 +13,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         freezeFEMs = false
         onlineAnalysis = 'extracellular'% Type of online analysis
         numberOfRepeats = uint16(50)   % Number of epochs
+        modImgDir = ''  % Directory of modified image .mat files
     end
     
     properties (Hidden)
@@ -79,16 +80,33 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             % Get the image name.
             obj.imageName = obj.im.FEMdata(obj.stimulusIndex).ImageName;
             
-            % Load the image.
-            fileId = fopen([obj.pkgDir,'\doves\images\', obj.imageName],'rb','ieee-be');
-            img = fread(fileId, [1536 1024], 'uint16');
-            fclose(fileId);
+            % Load the image if blur and pix index are 0
+            if obj.pixIndex == 0 && obj.blurIndex == 0
+                fileId = fopen([obj.pkgDir,'\doves\images\', obj.imageName],'rb','ieee-be');
+                img = fread(fileId, [1536 1024], 'uint16');
+                fclose(fileId);
+                
+                img = double(img');
+                img = (img./max(img(:))); %rescale s.t. brightest point is maximum monitor level
+                obj.backgroundIntensity = mean(img(:));%set the mean to the mean over the image
+                img = img.*255; %rescale s.t. brightest point is maximum monitor level
+                obj.imageMatrix = uint8(img);
+            end
+
+            % If pixIndex > 0 and blurIndex == 0, load pixellated image
+            if obj.pixIndex > 0 && obj.blurIndex == 0
+                pixSize = obj.pixSizes(obj.pixIndex);
+                filepath = [obj.modImgDir, obj.imageName, '_pix_', num2str(pixSize), '.mat'];
+                obj.imageMatrix = load(filepath).pixImageMatrix;
+            end
+
+            % if blurIndex>0, load blurred image
+            if obj.blurIndex > 0
+                blurSize = obj.blurSizes(obj.blurIndex);
+                filepath = [obj.modImgDir, obj.imageName, '_blur_', num2str(blurSize), '.mat'];
+                obj.imageMatrix = load(filepath).blurImageMatrix;
+            end
             
-            img = double(img');
-            img = (img./max(img(:))); %rescale s.t. brightest point is maximum monitor level
-            obj.backgroundIntensity = mean(img(:));%set the mean to the mean over the image
-            img = img.*255; %rescale s.t. brightest point is maximum monitor level
-            obj.imageMatrix = uint8(img);
             
             %get appropriate eye trajectories, at 200Hz
             if (obj.freezeFEMs) %freeze FEMs, hang on fixations
@@ -153,8 +171,8 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             p.setBackgroundColor(obj.backgroundIntensity);
             
             % Create your scene.
-            scene = stage.builtin.stimuli.Image(obj.currImageMatrix);
-            scene.size = [size(obj.currImageMatrix,2) size(obj.currImageMatrix,1)]*obj.magnificationFactor;
+            scene = stage.builtin.stimuli.Image(obj.imageMatrix);
+            scene.size = [size(obj.imageMatrix,2) size(obj.imageMatrix,1)]*obj.magnificationFactor;
             p0 = obj.canvasSize/2;
             scene.position = p0;
             
@@ -218,14 +236,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareEpoch(obj, epoch)
             
-            % If pixIndex or blurIndex is not 0, pixellate or blur image
-            obj.currImageMatrix = obj.imageMatrix; % Create copy of image matrix
-            if obj.pixIndex > 0 && obj.blurIndex==0
-                obj.pixellateImage(obj.currImageMatrix, obj.pixSizes(obj.pixIndex));
-            end
-            if obj.blurIndex > 0
-                obj.blurImage(obj.currImageMatrix, obj.blurSizes(obj.blurIndex));
-            end
+            obj.getImageSubject();
 
             % Increment pix index till end of pixSizes
             obj.pixIndex = obj.pixIndex + 1;
