@@ -69,8 +69,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.pixIndex = 0;
             obj.blurIndex = 0;
 
-            
-            
+            % Append length(blurSizes) 0's to pixSizes 
+            obj.pixSizes = [obj.pixSizes zeros(1,length(obj.blurSizes))];
+
             disp('Prepared run');
         end
         
@@ -228,13 +229,12 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             % then increment blur index till end of blurSizes
             if obj.pixIndex > length(obj.pixSizes)
-                obj.pixIndex = 0;
                 obj.blurIndex = obj.blurIndex + 1;
             end
 
             % then increment stimulus index and reset pix and blur indices
             if obj.blurIndex > length(obj.blurSizes)
-                obj.pixIndex = 1;
+                obj.pixIndex = 0;
                 obj.blurIndex = 0;
 
                 if length(unique(obj.stimulusIndices)) > 1
