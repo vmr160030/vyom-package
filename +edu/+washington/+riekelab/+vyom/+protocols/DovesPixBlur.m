@@ -34,7 +34,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         magnificationFactor
         currentStimSet
         stimulusIndex
-        pixIndex
+        pixAvIndex
         blurIndex
         pkgDir
         im
@@ -71,7 +71,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             end
 
             % Set blur and pixellation index
-            obj.pixIndex = -1;
+            obj.pixAvIndex = -1;
             obj.blurIndex = 0;
             obj.stimulusIndex = obj.stimulusIndices(1);
 
@@ -83,7 +83,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.imageName = obj.im.FEMdata(obj.stimulusIndex).ImageName;
             
             % Load the image if blur and pix index are 0
-            if obj.pixIndex == 0 && obj.blurIndex == 0
+            if obj.pixAvIndex == 0 && obj.blurIndex == 0
                 fileId = fopen([obj.pkgDir,'\doves\images\', obj.imageName],'rb','ieee-be');
                 img = fread(fileId, [1536 1024], 'uint16');
                 fclose(fileId);
@@ -95,9 +95,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
                 obj.imageMatrix = uint8(img);
             end
 
-            % If pixIndex > 0 and blurIndex == 0, load pixellated image
-            if obj.pixIndex > 0 && obj.blurIndex == 0
-                pixSize = obj.pixSizes(obj.pixIndex);
+            % If pixAvIndex > 0 and blurIndex == 0, load pixellated image
+            if obj.pixAvIndex > 0 && obj.blurIndex == 0
+                pixSize = obj.pixSizes(obj.pixAvIndex);
                 filepath = [obj.modImgDir, obj.imageName, '_pix_', num2str(pixSize), '.mat'];
                 data = load(filepath);
 		    obj.imageMatrix = data.pixImageMatrix;
@@ -240,10 +240,10 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareEpoch(obj, epoch)
             % Increment pix index till end of pixSizes
-            obj.pixIndex = obj.pixIndex + 1;
+            obj.pixAvIndex = obj.pixAvIndex + 1;
             
             % then increment blur index till end of blurSizes
-            if obj.pixIndex > obj.numPixSizes
+            if obj.pixAvIndex > obj.numPixSizes
                 obj.blurIndex = obj.blurIndex + 1;
             end
             if obj.blurIndex <= obj.numBlurSizes
@@ -252,7 +252,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             % then increment stimulus index and reset pix and blur indices
             if obj.blurIndex > obj.numBlurSizes
-                obj.pixIndex = 0;
+                obj.pixAvIndex = 0;
                 obj.blurIndex = 0;
 
                 % Set the current stimulus trajectory.
@@ -268,14 +268,14 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
             epoch.addParameter('magnificationFactor', obj.magnificationFactor);
             epoch.addParameter('currentStimSet',obj.currentStimSet);
-            epoch.addParameter('pixIndex', obj.pixIndex);
+            epoch.addParameter('pixAvIndex', obj.pixAvIndex);
             epoch.addParameter('blurIndex', obj.blurIndex);
             disp('Prepared epoch');
             
             % Display stim, pix, and blur indices
             disp(['Stimulus index: ' num2str(obj.stimulusIndex)]);
             disp(obj.imageName);
-            disp(['Pix index: ' num2str(obj.pixIndex)]);
+            disp(['Pix index: ' num2str(obj.pixAvIndex)]);
             disp(['Blur index: ' num2str(obj.blurIndex)]);
         end
         
