@@ -70,8 +70,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             end
 
             % Set blur and pixellation index
-            obj.pixIndex = 0;
+            obj.pixIndex = -1;
             obj.blurIndex = 0;
+            obj.stimulusIndex = obj.stimulusIndices(1);
 
             disp('Prepared run');
         end
@@ -237,9 +238,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareEpoch(obj, epoch)
-            
-            obj.getImageSubject();
-
             % Increment pix index till end of pixSizes
             obj.pixIndex = obj.pixIndex + 1;
             
@@ -247,7 +245,10 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             if obj.pixIndex > obj.numPixSizes
                 obj.blurIndex = obj.blurIndex + 1;
             end
-
+            if obj.blurIndex <= obj.numBlurSizes
+                obj.getImageSubject();
+            end
+            
             % then increment stimulus index and reset pix and blur indices
             if obj.blurIndex > obj.numBlurSizes
                 obj.pixIndex = 0;
@@ -259,6 +260,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
                     obj.getImageSubject();
                 end
             end
+            
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             % Save the parameters.
             epoch.addParameter('stimulusIndex', obj.stimulusIndex);
@@ -273,6 +275,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             
             % Display stim, pix, and blur indices
             disp(['Stimulus index: ' num2str(obj.stimulusIndex)]);
+            disp(obj.imageName);
             disp(['Pix index: ' num2str(obj.pixIndex)]);
             disp(['Blur index: ' num2str(obj.blurIndex)]);
         end
