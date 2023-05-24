@@ -34,11 +34,11 @@ for i=1:length(pixSizes)
     save([saveDir, imageName, '_pix_', num2str(pixSize), '.mat'], 'pixImageMatrix');
 end
 
-for i=1:length(blurSizes)
-    blurSize = blurSizes(i);
-    blurImageMatrix = blurImage(imageMatrix, blurSize);
-    save([saveDir, imageName, '_blur_', num2str(blurSize), '.mat'], 'blurImageMatrix');
-end
+% for i=1:length(blurSizes)
+%     blurSize = blurSizes(i);
+%     blurImageMatrix = blurImage(imageMatrix, blurSize);
+%     save([saveDir, imageName, '_blur_', num2str(blurSize), '.mat'], 'blurImageMatrix');
+% end
 end
 %%
 pixImageMatrix = load([saveDir, imageName, '_pix_', num2str(pixSize), '.mat']).pixImageMatrix;
@@ -47,14 +47,14 @@ imshow(pixImageMatrix);
 %%
 function img = pixellateImage(img, pixSizeMicrons)
     % Convert pixSize from microns to VH pixels.
-    pixSizeArcmin = pixSizeMicrons / 3.3;
+    pixSizeArcmin = int32(pixSizeMicrons / 3.3);
     
-    % Pixellate the image.
-    originalDims = size(img);
-    downscaledDims = round(originalDims / pixSizeArcmin);
-
-    img = imresize(img, downscaledDims, 'nearest');
-    img = imresize(img, originalDims, 'nearest');
+    % Pixellate the image by averaging over patches of size pixSizeArcmin.
+    for i = 1:pixSizeArcmin:size(img,1)-pixSizeArcmin
+        for j = 1:pixSizeArcmin:size(img,2)-pixSizeArcmin
+            img(i:i+pixSizeArcmin-1, j:j+pixSizeArcmin-1) = mean(mean(img(i:i+pixSizeArcmin-1, j:j+pixSizeArcmin-1)));
+        end
+    end
 end
 
 function img = blurImage(img, blurSizeMicrons)
