@@ -13,7 +13,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         freezeFEMs = false
         onlineAnalysis = 'extracellular'% Type of online analysis
         numberOfRepeats = uint16(50)   % Number of epochs
-        modImgDir = ''  % Directory of modified image .mat files
+        modImgDir = 'C:\Users\Public\Documents\GitRepos\Symphony2\vyom-package\+edu\+washington\+riekelab\+vyom\+Doves\+PixBlurImages\'  % Directory of modified image .mat files
     end
     
     properties (Hidden)
@@ -97,14 +97,16 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             if obj.pixIndex > 0 && obj.blurIndex == 0
                 pixSize = obj.pixSizes(obj.pixIndex);
                 filepath = [obj.modImgDir, obj.imageName, '_pix_', num2str(pixSize), '.mat'];
-                obj.imageMatrix = load(filepath).pixImageMatrix;
+                data = load(filepath);
+		    obj.imageMatrix = data.pixImageMatrix;
             end
 
             % if blurIndex>0, load blurred image
             if obj.blurIndex > 0
                 blurSize = obj.blurSizes(obj.blurIndex);
                 filepath = [obj.modImgDir, obj.imageName, '_blur_', num2str(blurSize), '.mat'];
-                obj.imageMatrix = load(filepath).blurImageMatrix;
+                data = load(filepath);
+		    obj.imageMatrix = data.blurImageMatrix;
             end
             
             
