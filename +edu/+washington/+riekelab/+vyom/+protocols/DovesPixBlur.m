@@ -52,6 +52,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             obj.numBlurSizes = length(obj.blurSizes);
             obj.numPixSizes = length(obj.pixSizes);
             obj.numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
+            disp(obj.numVariants);
             obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
             
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
@@ -254,11 +255,9 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
                 obj.pixIndex = 0;
                 obj.blurIndex = 0;
 
-                if length(unique(obj.stimulusIndices)) > 1
-                    % Set the current stimulus trajectory.
-                    obj.stimulusIndex = obj.stimulusIndices(mod(obj.numEpochsCompleted, obj.numVariants) + 1);
-                    obj.getImageSubject();
-                end
+                % Set the current stimulus trajectory.
+                obj.stimulusIndex = obj.stimulusIndices(mod(obj.numEpochsCompleted, obj.numVariants) + 2);
+                obj.getImageSubject();
             end
             
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
