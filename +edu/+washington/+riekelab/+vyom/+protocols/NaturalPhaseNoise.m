@@ -4,13 +4,13 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
         preTime = 500                   % Stimulus leading duration (ms)
         stimTime = 1000                 % Stimulus duration (ms)
         tailTime = 500                  % Stimulus trailing duration (ms)
-        stimulusIndices = [2 6 12 18 24 30 40]         % Stimulus number (1:161)
-        noiseAmps = [0.05 0.1 0.2 0.3 0.4] % Phase noise amplitude (scalar)
+        stimNameFile = 'C:\Users\Public\Documents\GitRepos\Symphony2\vyom-package\+edu\+washington\+riekelab\+vyom\+Doves\+PhaseNoiseImages\pn_June6_2023.csv' % csv of stimulus filenames
+        noiseIndices = [0 1 2 3 4] % Phase noise amplitude index (0:4)
         maskDiameter = 0                % Mask diameter in pixels
         apertureDiameter = 2000         % Aperture diameter in pixels.
         freezeFEMs = false
         onlineAnalysis = 'extracellular' % Type of online analysis
-        numberOfRepeats = uint16(100)   % Number of epochs
+        numberOfRepeats = uint16(10)   % Number of flashes for each image
         modImgDir = 'C:\Users\Public\Documents\GitRepos\Symphony2\vyom-package\+edu\+washington\+riekelab\+vyom\+Doves\+PhaseNoiseImages\'  % Directory of modified image .mat files
     end
     
@@ -25,6 +25,7 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
         subjectName
         magnificationFactor
         currentStimSet
+        stimCsv
         stimulusIndex
         noiseIndex
         pkgDir
@@ -46,6 +47,10 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
             obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
             
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
+            
+            % Load stimulus info csv
+            obj.stimCsv = readtable(obj.stimNameFile);
+            
             % Get the resources directory.
             obj.pkgDir = manookinlab.Package.getResourcePath();
             
