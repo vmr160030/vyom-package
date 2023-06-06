@@ -20,7 +20,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         numberOfAverages % Number of epochs
         numVariants
         numBlurSizes
-        numMovies
         numPixSizes
         ampType
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
@@ -34,7 +33,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         magnificationFactor
         currentStimSet
         stimulusIndex
-        stimListIndex
+        stimListIdx
         pixAvIndex
         blurIndex
         pkgDir
@@ -52,8 +51,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
         function prepareRun(obj)
             obj.numBlurSizes = length(obj.blurSizes);
             obj.numPixSizes = length(obj.pixSizes);
-            obj.numMovies = length(obj.stimulusIndices);
-            obj.numVariants = (obj.numBlurSizes + obj.numPixSizes+1);
+            obj.numVariants = (length(obj.blurSizes) + length(obj.pixSizes)+1);
             disp(obj.numVariants);
             obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * length(obj.stimulusIndices);
             
@@ -69,8 +67,7 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             % Set blur and pixellation index
             obj.pixAvIndex = -1;
             obj.blurIndex = 0;
-            obj.stimListIndex = 1;
-            obj.stimulusIndex = obj.stimulusIndices(obj.stimListIndex);
+            obj.stimulusIndex = obj.stimulusIndices(1);
 
             disp('Prepared run');
         end
@@ -228,12 +225,8 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
                 obj.pixAvIndex = 0;
                 obj.blurIndex = 0;
 
-                % Reset stimListIndex if at end of list
-                obj.stimListIndex = obj.stimListIndex + 1;
-                if obj.stimListIndex > obj.numMovies
-                   obj.stimListIndex = 1; 
-                end
-                obj.stimulusIndex = obj.stimulusIndices(obj.stimListIndex);
+                % Set the current stimulus trajectory.
+                obj.stimulusIndex = obj.stimulusIndices(mod(obj.numEpochsCompleted, obj.numVariants) + 2);
                 obj.getImageSubject();
             end
             
@@ -250,7 +243,6 @@ classdef DovesPixBlur < manookinlab.protocols.ManookinLabStageProtocol
             disp('Prepared epoch');
             
             % Display stim, pix, and blur indices
-            disp(['stimListIndex: ' num2str(obj.stimListIndex)]);
             disp(['Stimulus index: ' num2str(obj.stimulusIndex)]);
             disp(obj.imageName);
             disp(['Pix index: ' num2str(obj.pixAvIndex)]);

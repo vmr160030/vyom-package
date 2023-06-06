@@ -51,14 +51,6 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
             % Load stimulus info csv
             obj.stimCsv = readtable(obj.stimNameFile);
             
-            % Get the resources directory.
-            obj.pkgDir = manookinlab.Package.getResourcePath();
-            
-            obj.currentStimSet = 'dovesFEMstims20160826.mat';
-            
-            % Load the current stimulus set.
-            obj.im = load([obj.pkgDir,'\',obj.currentStimSet]);
-            
             % Get the image and subject names.
             if length(unique(obj.stimulusIndices)) == 1
                 obj.stimulusIndex = unique(obj.stimulusIndices);
@@ -78,15 +70,7 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
             
             % Load the image if noise index is 0.
             if obj.noiseIndex == 0
-                fileId = fopen([obj.pkgDir,'\doves\images\', obj.imageName],'rb','ieee-be');
-                img = fread(fileId, [1536 1024], 'uint16');
-                fclose(fileId);
                 
-                img = double(img');
-                img = (img./max(img(:))); %rescale s.t. brightest point is maximum monitor level
-                obj.backgroundIntensity = mean(img(:));%set the mean to the mean over the image
-                img = img.*255; %rescale s.t. brightest point is maximum monitor level
-                obj.imageMatrix = uint8(img);
             end
 
             % If noiseIndex>0, load the noise image.
