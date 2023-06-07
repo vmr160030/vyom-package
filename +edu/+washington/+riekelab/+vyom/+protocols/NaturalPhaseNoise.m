@@ -58,9 +58,8 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
             disp(obj.numVariants);
             obj.numberOfAverages = obj.numberOfRepeats * obj.numVariants * obj.numImages;
             
+            % Prepare run superclass later as needs numberOfAverages set
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
-            
-            
 
             % Set noise and stimulus indices.
             obj.noiseIndex = -2;
@@ -94,16 +93,18 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
         
         function p = createPresentation(obj)
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
+            %canvasSize = obj.rig.getDevice('Stage').getCanvasSize();
             p.setBackgroundColor(obj.backgroundIntensity);
             
             % Create your scene.
             scene = stage.builtin.stimuli.Image(obj.imageMatrix);
             scene.size = [size(obj.imageMatrix,2) size(obj.imageMatrix,1)]*obj.magnificationFactor;
+            %scene.size = canvasSize;
             p0 = obj.canvasSize/2;
             scene.position = p0;
             
-            scene.setMinFunction(GL.NEAREST);
-            scene.setMagFunction(GL.NEAREST);
+            scene.setMinFunction(GL.LINEAR);
+            scene.setMagFunction(GL.LINEAR);
             
             % Add the stimulus to the presentation.
             p.addStimulus(scene);            
@@ -138,9 +139,11 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
                 mask.radiusY = obj.maskDiameter/2;
                 p.addStimulus(mask); %add mask
             end
+            disp('created presentation');
         end
         
         function prepareEpoch(obj, epoch)
+            prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             % Increment noise index till end of noiseAmps
             obj.noiseIndex = obj.noiseIndex + 1;
             if obj.noiseIndex <= obj.numNoiseAmps
@@ -160,8 +163,8 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
                 obj.getImageVersion();
             end
             
-            imshow(obj.imageMatrix);
-            prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
+            %imshow(obj.imageMatrix);
+            
             % Save the parameters.
             epoch.addParameter('stimListIndex', obj.stimListIndex);
             epoch.addParameter('imageName', obj.imageName);
