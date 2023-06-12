@@ -42,7 +42,7 @@ classdef NaturalPhaseNoise < manookinlab.protocols.ManookinLabStageProtocol
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
             
             % General directory
-            obj.directory = strcat('C:\Users\Public\Documents\GitRepos\Symphony2\flashed_images\',obj.fileFolder); % General folder
+            obj.directory = obj.fileFolder; % General folder
             D = dir(obj.directory);
             
             obj.imagePaths = cell(size(D,1),1);
