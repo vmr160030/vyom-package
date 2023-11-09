@@ -6,7 +6,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
         tailTime = 250                  % Bar trailing duration (ms)
         orientation = 0                 % Bar angle (deg)
         speeds = [0.5,1,2,4]*1000       % Bar speeds (mu/sec)
-        contrasts = [-1, 1]             % Bar contrast
+        % contrasts = [-1, 1]             % Bar contrast
         barSize = [200, 3000]            % Bar size (x,y) in pixels
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         innerMaskRadius = 0             % Inner mask radius in pixels.
@@ -19,7 +19,9 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
         gratingBarWidth = 400 % Grating half-cycle width (microns)
         gratingSpatialPhase = 0.0
         gratingOrientations = 0:90:180 % Grating orientations (deg)
-        % Assume sinewave spatialClass and drifting temporalClass
+        gratingContrast = 1.0 % Grating contrast (0-1)
+        temporalClass = 'drifting' % Sinewave temporal class
+        % Assume sinewave spatialClass
     end
     
     properties (Hidden)
@@ -35,6 +37,9 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
         intensity
         barSizePix
         startPix
+        gratingBarWidthPix
+        spatialFrequency
+        gratingOrientation
     end
     
     methods
@@ -87,22 +92,47 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             grate = stage.builtin.stimuli.Grating('sine');
             grate.orientation = obj.gratingOrientation;
             % Set grate size
-            
-            rect = stage.builtin.stimuli.Rectangle();
-            rect.size = obj.barSizePix;
-            rect.position = obj.canvasSize/2;
-            rect.orientation = obj.orientation;
-            rect.color = obj.intensity;
-            
-            % Add the stimulus to the presentation.
-            p.addStimulus(rect);
-            
-            barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
+            grate.size = obj.barSizePix;
+            grate.position = [0, 0];
+            grate.spatialFreq = 1/(2*obj.gratingBarWidthPix); %convert from bar width to spatial freq
+            grate.contrast = obj.gratingContrast;
+            grate.color = 2*obj.backgroundIntensity;
+            %calc to apply phase shift s.t. a contrast-reversing boundary
+            %is in the center regardless of spatial frequency. Arbitrarily
+            %say boundary should be positve to right and negative to left
+            %crosses x axis from neg to pos every period from 0
+            zeroCrossings = 0:(grate.spatialFreq^-1):grate.size(1); 
+            offsets = zeroCrossings-grate.size(1)/2; %difference between each zero crossing and center of texture, pixels
+            [shiftPix, ~] = min(offsets); % min(offsets(offsets>0)); %positive shift in pixels
+            phaseShift_rad = (shiftPix/(grate.spatialFreq^-1))*(2*pi); %phaseshift in radians
+            obj.phaseShift = 360*(phaseShift_rad)/(2*pi); %phaseshift in degrees
+            grate.phase = obj.phaseShift + obj.spatialPhase; %keep contrast reversing boundary in center
+            % Make the grating visible only during the stimulus time.
+            grateVisible = stage.builtin.controllers.PropertyController(grate, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-            p.addController(barVisible);
+
+            % Control the grating phase.
+            if strcmp(obj.temporalClass, 'drifting')
+                imgController = stage.builtin.controllers.PropertyController(grate, 'phase',...
+                    @(state)setDriftingGrating(obj, state.time - (obj.preTime + obj.waitTime) * 1e-3));
+            else
+                imgController = stage.builtin.controllers.PropertyController(grate, 'phase',...
+                    @(state)setReversingGrating(obj, state.time - (obj.preTime + obj.waitTime) * 1e-3));
+            end
+            
+            % Set the drifting grating.
+            function phase = setDriftingGrating(obj, time)
+                if time >= 0
+                    phase = obj.temporalFrequency * time * 2 * pi;
+                else
+                    phase = 0;
+                end
+                
+                phase = phase*180/pi + obj.phaseShift + obj.spatialPhase;
+            end
             
             % Bar position controller
-            barPosition = stage.builtin.controllers.PropertyController(rect, 'position', ...
+            barPosition = stage.builtin.controllers.PropertyController(grate, 'position', ...
                 @(state)motionTable(obj, state.time - obj.preTime*1e-3));
             p.addController(barPosition);
             
@@ -112,6 +142,11 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
                 
                 p = [cos(obj.orientationRads) sin(obj.orientationRads)] .* (inc*ones(1,2)) + obj.canvasSize/2;
             end
+
+            p.addStimulus(grate);
+            p.addController(imgController);
+            p.addController(grateVisible);
+            p.addController(barPosition);
             
             % Create the inner mask.
             if (obj.innerMaskRadius > 0)
@@ -147,14 +182,14 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             
             obj.contrast = obj.contrasts(mod(obj.numEpochsCompleted, length(obj.contrasts))+1);
-            if obj.backgroundIntensity > 0
-                obj.intensity = obj.contrast*obj.backgroundIntensity + obj.backgroundIntensity;
-            else
-                obj.intensity = obj.contrast;
-            end
+            % if obj.backgroundIntensity > 0
+            %     obj.intensity = obj.contrast*obj.backgroundIntensity + obj.backgroundIntensity;
+            % else
+            %     obj.intensity = obj.contrast;
+            % end
             
             % Get the current bar speed.
-            obj.speed = obj.speeds(mod(floor(obj.numEpochsCompleted/length(obj.contrasts)), length(obj.speeds))+1);
+            obj.speed = obj.speeds(mod(floor(obj.numEpochsCompleted/length(obj.gratingOrientations)), length(obj.speeds))+1);
             obj.speedPix = obj.rig.getDevice('Stage').um2pix(obj.speed);
             obj.orientationRads = obj.orientation / 180 * pi;
 
