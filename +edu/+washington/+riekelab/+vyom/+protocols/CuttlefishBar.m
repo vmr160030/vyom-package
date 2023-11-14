@@ -81,12 +81,14 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             obj.barSpeedPix = obj.rig.getDevice('Stage').um2pix(obj.barSpeed);
 
             % Get bar width in downsampled space
-            obj.barSizeDownPix = obj.barSizePix/obj.downsamp;
-            obj.barSpeedDownPix = obj.barSpeedPix/obj.downsamp;
+            obj.barSizeDownPix = round(obj.barSizePix/obj.downsamp);
+            obj.barSpeedDownPix = round(obj.barSpeedPix/obj.downsamp);
 
             % Set bar initial offset
             obj.barInitOffsetPix = min(obj.canvasSize/2);
-            obj.barInitOffsetDownPix = obj.barInitOffsetPix/obj.downsamp;
+            obj.barInitOffsetDownPix = round(obj.barInitOffsetPix/obj.downsamp);
+            disp('barSizeDownPix, barSpeedDownPix, barInitOffsetDownPix');
+            disp([obj.barSizeDownPix, obj.barSpeedDownPix, obj.barInitOffsetDownPix]);
 
             % Set bar orientation. Hardcoded to 0 for now, moving to the right in x.
             % obj.barOrientation = 0;
@@ -175,6 +177,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
                 %% Calculate moving bar position
                 % Inc keeps track of right edge of bar
                 inc = time * obj.barSpeedDownPix + obj.barSizeDownPix - obj.barInitOffsetDownPix;
+                inc = round(inc);
                 disp(inc);
 
                 % When inc exceeds 0, mask g with a rectangle of size barSizeDownPix with right edge at inc
@@ -194,8 +197,10 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
 
                     % Set g to 0 between maskStart and maskEnd
                     disp([maskStart, maskEnd]);
+                    if maskStart ~= maskEnd
                     g(:,maskStart:maskEnd,:) = 0;
                     disp(g(:,maskStart:maskEnd,:));
+                    end
 
                 end
 
