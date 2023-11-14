@@ -71,6 +71,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
 
             % Set downsampling factor
             obj.downsamp = 4;
+            disp(obj.downsamp);
             
             % Calculate the spatial phase in radians.
             obj.spatialPhaseRad = obj.spatialPhase / 180 * pi;
@@ -181,27 +182,20 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
                 disp(inc);
 
                 % When inc exceeds 0, mask g with a rectangle of size barSizeDownPix with right edge at inc
-                if inc > 0 
-                    maskEnd = round(inc);
-                    maskStart = round(inc) - obj.barSizeDownPix;
-
-                    % If maskStart is negative, set it to 0
-                    if maskStart < 0
-                        maskStart = 0;
+                if inc > 0 && inc - obj.barSizeDownPix < obj.downSampDim
+                    maskEnd = inc;
+                    maskStart = inc - obj.barSizeDownPix;
+                    
+                    if maskStart > 1
+                       g(:, 1:maskStart, :) = 0; 
                     end
-
-                    % If maskEnd is greater than downSampDim, set it to downSampDim
-                    if maskEnd > obj.downSampDim
-                        maskEnd = obj.downSampDim;
+                   
+                    if maskEnd < obj.downSampDim
+                        g(:, maskEnd:obj.downSampDim, :) = 0;
                     end
-
-                    % Set g to 0 between maskStart and maskEnd
-                    disp([maskStart, maskEnd]);
-                    if maskStart ~= maskEnd
-                    g(:,maskStart:maskEnd,:) = 0;
-                    disp(g(:,maskStart:maskEnd,:));
-                    end
-
+                    
+                else
+                    g = 0*g;
                 end
 
 
