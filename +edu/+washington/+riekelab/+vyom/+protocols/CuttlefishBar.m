@@ -1,48 +1,65 @@
-classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built from MovingBarSpeedTuning
+classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built from ContrastResponseGrating
     properties
         amp                             % Output amplifier
-        preTime = 250                   % Bar leading duration (ms)
-        stimTime = 6000                 % Bar duration (ms)
-        tailTime = 250                  % Bar trailing duration (ms)
-        orientation = 0                 % Bar angle (deg)
-        speeds = [0.5,1,2,4]*1000       % Bar speeds (mu/sec)
-        % contrasts = [-1, 1]             % Bar contrast
-        barSize = [200, 3000]            % Bar size (x,y) in pixels
+        preTime = 250                   % Grating leading duration (ms)
+        stimTime = 6000                 % Grating duration (ms)
+        tailTime = 250                  % Grating trailing duration (ms)
+        contrast = 1.0 % Grating contrast (0-1)
+        gratingOrientation = 0.0               % Grating orientation (deg)
+        gratingBarWidth = 300                  % Grating bar width (um)
+        temporalFrequency = 4.0         % Temporal frequency (Hz)
+        spatialPhase = 0.0              % Spatial phase of grating (deg)
         backgroundIntensity = 0.5       % Background light intensity (0-1)
-        innerMaskRadius = 0             % Inner mask radius in pixels.
-        outerMaskRadius = 0           % Outer mask radius in pixels.
-        onlineAnalysis = 'none'         % Online analysis type.
-        numberOfAverages = uint16(96)   % Number of epochs
+        centerOffset = [0,0]            % Center offset in pixels (x,y)
+        apertureRadius = 0              % Aperture radius in pixels.
+        apertureClass = 'spot'          % Spot or annulus?       
+        spatialClass = 'squarewave'     % Spatial type (sinewave or squarewave)
+        temporalClass = 'drifting'      % Temporal type (drifting or reversing)      
+        chromaticClass = 'achromatic'   % Chromatic type
+        numberOfAverages = uint16(12)   % Number of epochs
 
-        % Grating parameters
-        temporalFrequency = 4.0 % Hz
-        gratingBarWidth = 400 % Grating half-cycle width (microns)
-        gratingSpatialPhase = 0.0
-        gratingOrientations = 0:90:180 % Grating orientations (deg)
-        gratingContrast = 1.0 % Grating contrast (0-1)
-        temporalClass = 'drifting' % Sinewave temporal class
-        % Assume sinewave spatialClass
+        % barOrientation = 0              % Bar orientation (deg). For now always 0.
+        barSize = 400                   % Bar size (um). Only in x-direction
+        barSpeed = 1000                 % Bar speed (um/sec)
     end
     
     properties (Hidden)
         ampType
+        apertureClassType = symphonyui.core.PropertyType('char', 'row', {'spot', 'annulus'})
+        spatialClassType = symphonyui.core.PropertyType('char', 'row', {'sinewave', 'squarewave'})
+        temporalClassType = symphonyui.core.PropertyType('char', 'row', {'drifting', 'reversing'})
+        chromaticClassType = symphonyui.core.PropertyType('char', 'row', {'achromatic','red-green isoluminant','red-green isochromatic','S-iso','M-iso','L-iso'})
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
-        speedsType = symphonyui.core.PropertyType('denserealdouble','matrix')
         contrastsType = symphonyui.core.PropertyType('denserealdouble','matrix')
-        sequence
-        orientationRads
-        speed
-        speedPix
-        contrast
-        intensity
-        barSizePix
-        startPix
+        rawImage
+        spatialPhaseRad % The spatial phase in radians.
+        spatialFreq % The current spatial frequency for the epoch
+        backgroundMeans
         gratingBarWidthPix
-        spatialFrequency
-        gratingOrientation
+        barSizePix
+        barSizeDownPix
+        barSpeedPix
+        barSpeedDownPix
+        barInitOffsetPix
+        barInitOffsetDownPix
+        downsamp
+        downSampDim
+    end
+    
+    % Analysis properties
+    properties (Hidden)
+        xaxis
+        F1Amp
+        repsPerX
+        coneContrasts 
+    end
+    
+    properties (Hidden, Transient)
+        analysisFigure
     end
     
     methods
+        
         function didSetRig(obj)
             didSetRig@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);
             
@@ -51,174 +68,218 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
         
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
+
+            % Set downsampling factor
+            obj.downsamp = 4;
             
-            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
+            % Calculate the spatial phase in radians.
+            obj.spatialPhaseRad = obj.spatialPhase / 180 * pi;
             
-            obj.barSizePix = obj.rig.getDevice('Stage').um2pix(obj.barSize);
-            if obj.outerMaskRadius == 0
-                obj.startPix = -obj.canvasSize(1)/2;
-            end
-            
-            % Get gratingBarWidth in pixels
+            % Get the bar width in pixels
             obj.gratingBarWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gratingBarWidth);
+            obj.barSizePix = obj.rig.getDevice('Stage').um2pix(obj.barSize);
+            obj.barSpeedPix = obj.rig.getDevice('Stage').um2pix(obj.barSpeed);
 
-            % Set sequence of grating orientations
-            obj.organizeParameters();
-        end
+            % Get bar width in downsampled space
+            obj.barSizeDownPix = obj.barSizePix/obj.downsamp;
+            obj.barSpeedDownPix = obj.barSpeedPix/obj.downsamp;
 
-        function organizeParameters(obj)
-            % Calculate the number of repetitions of each annulus type.
-            numReps = ceil(double(obj.numberOfAverages) / length(obj.gratingOrientations));
+            % Set bar initial offset
+            obj.barInitOffsetPix = min(obj.canvasSize/2);
+            obj.barInitOffsetDownPix = obj.barInitOffsetPix/obj.downsamp;
+
+            % Set bar orientation. Hardcoded to 0 for now, moving to the right in x.
+            % obj.barOrientation = 0;
+            % obj.barOrientationRads = obj.barOrientation / 180 * pi;
             
-            % Set the sequence.
-            if obj.randomOrder
-                obj.sequence = zeros(length(obj.gratingOrientations), numReps);
-                for k = 1 : numReps
-                    obj.sequence(:,k) = obj.gratingOrientations(randperm(length(obj.gratingOrientations)));
-                end
+            % Calculate the spatial frequency.
+            obj.spatialFreq = min(obj.canvasSize)/(2*obj.gratingBarWidthPix);
+            
+            % Set the LED weights.
+            if strcmp(obj.stageClass,'LightCrafter')
+                obj.backgroundMeans = obj.backgroundIntensity*ones(1,3);
+                obj.colorWeights = ones(1,3);
             else
-                obj.sequence = obj.gratingOrientations(:) * ones(1, numReps);
+                if strcmp(obj.chromaticClass, 'achromatic')
+                    obj.backgroundMeans = obj.backgroundIntensity*ones(1,3);
+                    obj.colorWeights = ones(1,3);
+                else
+                    [obj.backgroundMeans, ~, obj.colorWeights] = getMaxContrast(obj.quantalCatch, obj.chromaticClass);
+                end
             end
-            obj.sequence = obj.sequence(:)';
-            obj.sequence = obj.sequence(1 : obj.numberOfAverages);
+            
+            % Calculate the cone contrasts.
+            obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
+                obj.colorWeights, 'michaelson');
+            
+            % Set up the raw image.
+            obj.setRawImage();
         end
         
+        
         function p = createPresentation(obj)
-
-            p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
-            p.setBackgroundColor(obj.backgroundIntensity);
             
-            % Initialize grating
-            grate = stage.builtin.stimuli.Grating('sine');
-            grate.orientation = obj.gratingOrientation;
-            % Set grate size
-            grate.size = obj.barSizePix;
-            grate.position = [0, 0];
-            grate.spatialFreq = 1/(2*obj.gratingBarWidthPix); %convert from bar width to spatial freq
-            grate.contrast = obj.gratingContrast;
-            grate.color = 2*obj.backgroundIntensity;
-            %calc to apply phase shift s.t. a contrast-reversing boundary
-            %is in the center regardless of spatial frequency. Arbitrarily
-            %say boundary should be positve to right and negative to left
-            %crosses x axis from neg to pos every period from 0
-            zeroCrossings = 0:(grate.spatialFreq^-1):grate.size(1); 
-            offsets = zeroCrossings-grate.size(1)/2; %difference between each zero crossing and center of texture, pixels
-            [shiftPix, ~] = min(offsets); % min(offsets(offsets>0)); %positive shift in pixels
-            phaseShift_rad = (shiftPix/(grate.spatialFreq^-1))*(2*pi); %phaseshift in radians
-            obj.phaseShift = 360*(phaseShift_rad)/(2*pi); %phaseshift in degrees
-            grate.phase = obj.phaseShift + obj.spatialPhase; %keep contrast reversing boundary in center
+            p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3); %create presentation of specified duration
+            p.setBackgroundColor(obj.backgroundMeans); % Set background intensity
+            
+            % Create the grating.
+            grate = stage.builtin.stimuli.Image(uint8(0 * obj.rawImage));
+            grate.position = obj.canvasSize / 2;
+            grate.size = obj.canvasSize(1)*ones(1,2); % Scale by canvas width
+            grate.gratingOrientation = obj.gratingOrientation;
+            
+            % Set the minifying and magnifying functions.
+            grate.setMinFunction(GL.NEAREST);
+            grate.setMagFunction(GL.NEAREST);
+            
+            % Add the grating.
+            p.addStimulus(grate);
+            
             % Make the grating visible only during the stimulus time.
             grateVisible = stage.builtin.controllers.PropertyController(grate, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-
-            % Control the grating phase.
+            p.addController(grateVisible);
+            
+            %--------------------------------------------------------------
+            % Generate the grating.
             if strcmp(obj.temporalClass, 'drifting')
-                imgController = stage.builtin.controllers.PropertyController(grate, 'phase',...
-                    @(state)setDriftingGrating(obj, state.time - (obj.preTime + obj.waitTime) * 1e-3));
+                imgController = stage.builtin.controllers.PropertyController(grate, 'imageMatrix',...
+                    @(state)setDriftingGrating(obj, state.time - obj.preTime * 1e-3));
             else
-                imgController = stage.builtin.controllers.PropertyController(grate, 'phase',...
-                    @(state)setReversingGrating(obj, state.time - (obj.preTime + obj.waitTime) * 1e-3));
+                imgController = stage.builtin.controllers.PropertyController(grate, 'imageMatrix',...
+                    @(state)setReversingGrating(obj, state.time - obj.preTime * 1e-3));
             end
+            p.addController(imgController);
             
             % Set the drifting grating.
-            function phase = setDriftingGrating(obj, time)
+            function g = setDriftingGrating(obj, time)
                 if time >= 0
                     phase = obj.temporalFrequency * time * 2 * pi;
                 else
                     phase = 0;
                 end
                 
-                phase = phase*180/pi + obj.phaseShift + obj.spatialPhase;
+                g = cos(obj.spatialPhaseRad + phase + obj.rawImage);
+                
+                if strcmp(obj.spatialClass, 'squarewave')
+                    g = sign(g);
+                end
+                
+                g = obj.contrast * g;
+
+                %% Calculate moving bar position
+                % Inc keeps track of right edge of bar
+                inc = time * obj.barSpeedDownPix + obj.barSizeDownPix - obj.barInitOffsetDownPix;
+
+                % When inc exceeds 0, mask g with a rectangle of size barSizeDownPix with right edge at inc
+                if inc > 0 
+                    maskEnd = round(inc);
+                    maskStart = round(inc) - obj.barSizeDownPix;
+
+                    % If maskStart is negative, set it to 0
+                    if maskStart < 0
+                        maskStart = 0;
+                    end
+
+                    % If maskEnd is greater than downSampDim, set it to downSampDim
+                    if maskEnd > obj.downSampDim
+                        maskEnd = obj.downSampDim;
+                    end
+
+                    % Set g to 0 between maskStart and maskEnd
+                    g(:,maskStart:maskEnd,:) = 0;
+
+                end
+
+
+                % Deal with chromatic gratings.
+                if ~strcmp(obj.stageClass,'LightCrafter')
+                    for m = 1 : 3
+                        g(:,:,m) = obj.backgroundMeans(m) * obj.colorWeights(m) * g(:,:,m) + obj.backgroundMeans(m);
+                    end
+                    g = uint8(255*(g));
+                else
+                    g = uint8(255*(obj.backgroundIntensity * g + obj.backgroundIntensity));
+                end
             end
             
-            % Bar position controller
-            barPosition = stage.builtin.controllers.PropertyController(grate, 'position', ...
-                @(state)motionTable(obj, state.time - obj.preTime*1e-3));
-            p.addController(barPosition);
-            
-            function p = motionTable(obj, time)
-                % Calculate the increment with time.  
-                inc = time * obj.speedPix + obj.startPix - obj.barSizePix(1)/2;
+            % Set the reversing grating
+            function g = setReversingGrating(obj, time)
+                if time >= 0
+                    phase = round(0.5 * sin(time * 2 * pi * obj.temporalFrequency) + 0.5) * pi;
+                else
+                    phase = 0;
+                end
                 
-                p = [cos(obj.orientationRads) sin(obj.orientationRads)] .* (inc*ones(1,2)) + obj.canvasSize/2;
+                g = cos(obj.spatialPhaseRad + phase + obj.rawImage);
+                
+                if strcmp(obj.spatialClass, 'squarewave')
+                    g = sign(g);
+                end
+                
+                g = obj.contrast * g;
+                
+                % Deal with chromatic gratings.
+                if ~strcmp(obj.chromaticClass, 'achromatic')
+                    for m = 1 : 3
+                        g(:,:,m) = obj.colorWeights(m) * g(:,:,m);
+                    end
+                end
+                g = uint8(255*(obj.backgroundIntensity * g + obj.backgroundIntensity));
             end
 
-            p.addStimulus(grate);
-            p.addController(imgController);
-            p.addController(grateVisible);
-            p.addController(barPosition);
-            
-            % Create the inner mask.
-            if (obj.innerMaskRadius > 0)
-                p.addStimulus(obj.makeInnerMask());
-            end
-            
-            % Create the outer mask.
-            if (obj.outerMaskRadius > 0)
-                p.addStimulus(obj.makeOuterMask());
+            if obj.apertureRadius > 0
+                if strcmpi(obj.apertureClass, 'spot')
+                    aperture = stage.builtin.stimuli.Rectangle();
+                    aperture.position = obj.canvasSize/2 + obj.centerOffset;
+                    aperture.color = obj.backgroundIntensity;
+                    aperture.size = [max(obj.canvasSize) max(obj.canvasSize)];
+                    mask = stage.core.Mask.createCircularAperture(obj.apertureRadius*2/max(obj.canvasSize), 1024);
+                    aperture.setMask(mask);
+                    p.addStimulus(aperture);
+                else
+                    mask = stage.builtin.stimuli.Ellipse();
+                    mask.color = obj.backgroundIntensity;
+                    mask.radiusX = obj.apertureRadius;
+                    mask.radiusY = obj.apertureRadius;
+                    mask.position = obj.canvasSize / 2 + obj.centerOffset;
+                    p.addStimulus(mask);
+                end
             end
         end
         
-        function mask = makeOuterMask(obj)
-            mask = stage.builtin.stimuli.Rectangle();
-            mask.color = obj.backgroundIntensity;
-            mask.position = obj.canvasSize/2;
-            mask.orientation = 0;
-            mask.size = 2 * max(obj.canvasSize) * ones(1,2);
-            sc = obj.outerMaskRadius*2 / (2*max(obj.canvasSize));
-            m = stage.core.Mask.createCircularAperture(sc);
-            mask.setMask(m);
-        end
-        
-        function mask = makeInnerMask(obj)
-            mask = stage.builtin.stimuli.Ellipse();
-            mask.radiusX = obj.innerMaskRadius;
-            mask.radiusY = obj.innerMaskRadius;
-            mask.color = obj.backgroundIntensity;
-            mask.position = obj.canvasSize/2;
+        function setRawImage(obj)
+            % This is a downsampled, 1D vector that will be base-input to cosine grating.
+            obj.downsamp = 4;
+            sz = obj.canvasSize(1);
+            x = linspace(-sz/2, sz/2, sz/obj.downsamp);
+            obj.downSampDim = length(x);
+            
+            % Center the stimulus.
+            x = x + obj.centerOffset(1)*cos(rotRads);
+            
+            x = x / min(obj.canvasSize) * 2 * pi;
+            
+            % Calculate the raw grating image.
+            img = x * obj.spatialFreq;
+            obj.rawImage = img(1,:);
+            
+            if ~strcmp(obj.stageClass, 'LightCrafter')
+                obj.rawImage = repmat(obj.rawImage, [1 1 3]);
+            end
         end
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-            
-            obj.contrast = obj.contrasts(mod(obj.numEpochsCompleted, length(obj.contrasts))+1);
-            % if obj.backgroundIntensity > 0
-            %     obj.intensity = obj.contrast*obj.backgroundIntensity + obj.backgroundIntensity;
-            % else
-            %     obj.intensity = obj.contrast;
-            % end
-            
-            % Get the current bar speed.
-            obj.speed = obj.speeds(mod(floor(obj.numEpochsCompleted/length(obj.gratingOrientations)), length(obj.speeds))+1);
-            obj.speedPix = obj.rig.getDevice('Stage').um2pix(obj.speed);
-            obj.orientationRads = obj.orientation / 180 * pi;
 
-            % Get current grating orientation.
-            obj.gratingOrientation = obj.sequence(obj.numEpochsCompleted+1);
-        
-            epoch.addParameter('speed', obj.speed);
-            epoch.addParameter('speedDegPerSec', obj.speed/250);
             epoch.addParameter('contrast', obj.contrast);
-            epoch.addParameter('gratingBarWidth', obj.gratingBarWidth);
-
-            % Get the spatial frequency.
-            obj.spatialFrequency = 1/(2*obj.barWidthPix);
-
-            % Add the spatial frequency to the epoch.
-            epoch.addParameter('gratingSpatialFrequency', obj.spatialFrequency);
+            epoch.addParameter('backgroundMeans',obj.backgroundMeans);
             
-            % Save out the current orientation.
-            epoch.addParameter('gratingOrientation', obj.gratingOrientation);
-        end
-        
-        % Same presentation each epoch in a run. Replay.
-        function controllerDidStartHardware(obj)
-            controllerDidStartHardware@edu.washington.riekelab.protocols.RiekeLabProtocol(obj);
-            if (obj.numEpochsCompleted >= 1) && (obj.numEpochsCompleted < obj.numberOfAverages) && length(obj.speeds)==1
-                obj.rig.getDevice('Stage').replay
-            else
-                obj.rig.getDevice('Stage').play(obj.createPresentation());
-            end
+            % Save out the cone/rod contrasts.
+            epoch.addParameter('lContrast', obj.coneContrasts(1));
+            epoch.addParameter('mContrast', obj.coneContrasts(2));
+            epoch.addParameter('sContrast', obj.coneContrasts(3));
+            epoch.addParameter('rodContrast', obj.coneContrasts(4));
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
@@ -228,5 +289,9 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
         function tf = shouldContinueRun(obj)
             tf = obj.numEpochsCompleted < obj.numberOfAverages;
         end
+        
+        
     end
 end
+
+
