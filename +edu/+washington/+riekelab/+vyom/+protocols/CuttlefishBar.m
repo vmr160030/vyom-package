@@ -13,7 +13,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
         centerOffset = [0,0]            % Center offset in pixels (x,y)
         apertureRadius = 0              % Aperture radius in pixels.
         apertureClass = 'spot'          % Spot or annulus?       
-        spatialClass = 'squarewave'     % Spatial type (sinewave or squarewave)
+        spatialClass = 'sinewave'     % Spatial type (sinewave or squarewave)
         temporalClass = 'drifting'      % Temporal type (drifting or reversing)      
         chromaticClass = 'achromatic'   % Chromatic type
         numberOfAverages = uint16(12)   % Number of epochs
@@ -114,6 +114,8 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             
             % Set up the raw image.
             obj.setRawImage();
+            disp('Prepared run. Canvas Size:');
+            disp(obj.canvasSize);
         end
         
         
@@ -121,12 +123,14 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3); %create presentation of specified duration
             p.setBackgroundColor(obj.backgroundMeans); % Set background intensity
+            disp('set background');
             
             % Create the grating.
             grate = stage.builtin.stimuli.Image(uint8(0 * obj.rawImage));
             grate.position = obj.canvasSize / 2;
             grate.size = obj.canvasSize(1)*ones(1,2); % Scale by canvas width
-            grate.gratingOrientation = obj.gratingOrientation;
+            grate.orientation = obj.gratingOrientation;
+            disp('Created grating');
             
             % Set the minifying and magnifying functions.
             grate.setMinFunction(GL.NEAREST);
@@ -134,6 +138,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             
             % Add the grating.
             p.addStimulus(grate);
+            disp('added grating');
             
             % Make the grating visible only during the stimulus time.
             grateVisible = stage.builtin.controllers.PropertyController(grate, 'visible', ...
@@ -170,6 +175,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
                 %% Calculate moving bar position
                 % Inc keeps track of right edge of bar
                 inc = time * obj.barSpeedDownPix + obj.barSizeDownPix - obj.barInitOffsetDownPix;
+                disp(inc);
 
                 % When inc exceeds 0, mask g with a rectangle of size barSizeDownPix with right edge at inc
                 if inc > 0 
@@ -187,7 +193,9 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
                     end
 
                     % Set g to 0 between maskStart and maskEnd
+                    disp([maskStart, maskEnd]);
                     g(:,maskStart:maskEnd,:) = 0;
+                    disp(g(:,maskStart:maskEnd,:));
 
                 end
 
@@ -246,16 +254,17 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
                     p.addStimulus(mask);
                 end
             end
+            disp('created presentation');
         end
         
         function setRawImage(obj)
             % This is a downsampled, 1D vector that will be base-input to cosine grating.
-            obj.downsamp = 4;
             sz = obj.canvasSize(1);
             x = linspace(-sz/2, sz/2, sz/obj.downsamp);
             obj.downSampDim = length(x);
             
             % Center the stimulus.
+            rotRads=0; % hardcoded for now
             x = x + obj.centerOffset(1)*cos(rotRads);
             
             x = x / min(obj.canvasSize) * 2 * pi;
@@ -267,6 +276,8 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             if ~strcmp(obj.stageClass, 'LightCrafter')
                 obj.rawImage = repmat(obj.rawImage, [1 1 3]);
             end
+            disp('Set Raw Image of size:');
+            disp(size(obj.rawImage));
         end
         
         function prepareEpoch(obj, epoch)
@@ -280,6 +291,7 @@ classdef CuttlefishBar < manookinlab.protocols.ManookinLabStageProtocol %Built f
             epoch.addParameter('mContrast', obj.coneContrasts(2));
             epoch.addParameter('sContrast', obj.coneContrasts(3));
             epoch.addParameter('rodContrast', obj.coneContrasts(4));
+            disp('Prepared epoch');
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
