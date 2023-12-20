@@ -78,9 +78,9 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
 
             % Repeat seqJitter for numberOfReps and numberOfImages to match numberOfAverages size
             obj.seqJitterX = repelem(obj.seqJitterX,obj.numberOfImages);
-            obj.seqJitterX = repmat(obj.seqJitterX,obj.numberOfRepsPerImage,1);
+            obj.seqJitterX = repmat(obj.seqJitterX,obj.numberOfReps,1);
             obj.seqJitterY = repelem(obj.seqJitterY,obj.numberOfImages);
-            obj.seqJitterY = repmat(obj.seqJitterY,obj.numberOfRepsPerImage,1);
+            obj.seqJitterY = repmat(obj.seqJitterY,obj.numberOfReps,1);
 
             % Create sequence of images to run through
             if obj.randomize
@@ -99,15 +99,18 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
 
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
+            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
 
             obj.jitterSpacingPix = obj.rig.getDevice('Stage').um2pix(obj.jitterSpacing);
 
             obj.organizeSequence();
 
-            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
+            
+            disp('prepared run')
         end
         
         function p = createPresentation(obj)
+            disp('creating presentation')
             % Stage presets
             canvasSize = obj.rig.getDevice('Stage').getCanvasSize();     
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
@@ -119,7 +122,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             % Prep to display image
             scene = stage.builtin.stimuli.Image(uint8(specificImage));
             scene.size = [canvasSize(1),canvasSize(2)];
-            scene.position = canvasSize/2 + [obj.jitterX, obj.jitterY];
+            scene.position = canvasSize/2;% + [obj.jitterX, obj.jitterY];
             
             % Use linear interpolation when scaling the image
             scene.setMinFunction(GL.LINEAR);
@@ -130,11 +133,13 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             sceneVisible = stage.builtin.controllers.PropertyController(scene, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
             p.addController(sceneVisible);
+            disp('created presentation');
         end
         
         
         
         function prepareEpoch(obj, epoch)
+            disp('preparing epoch')
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             
             img_idx = obj.sequence(mod(obj.numEpochsCompleted,length(obj.sequence)) + 1);
@@ -150,6 +155,9 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('jitterY',obj.jitterY);
             epoch.addParameter('jitterSpacing',obj.jitterSpacing);
             epoch.addParameter('jitterSpacingPix', obj.jitterSpacingPix);
+            disp(obj.image_name)
+            disp(obj.jitterX)
+            disp(obj.jitterY)
 
             
             if obj.randomize
