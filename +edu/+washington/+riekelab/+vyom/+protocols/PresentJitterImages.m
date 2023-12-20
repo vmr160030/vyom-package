@@ -98,12 +98,14 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function prepareRun(obj)
+            obj.jitterSpacingPix = obj.rig.getDevice('Stage').um2pix(obj.jitterSpacing);
+            obj.organizeSequence();
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
 
-            obj.jitterSpacingPix = obj.rig.getDevice('Stage').um2pix(obj.jitterSpacing);
+            
 
-            obj.organizeSequence();
+            
 
             
             disp('prepared run')
@@ -122,7 +124,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             % Prep to display image
             scene = stage.builtin.stimuli.Image(uint8(specificImage));
             scene.size = [canvasSize(1),canvasSize(2)];
-            scene.position = canvasSize/2;% + [obj.jitterX, obj.jitterY];
+            scene.position = canvasSize/2  + [obj.jitterX, obj.jitterY];
             
             % Use linear interpolation when scaling the image
             scene.setMinFunction(GL.LINEAR);
