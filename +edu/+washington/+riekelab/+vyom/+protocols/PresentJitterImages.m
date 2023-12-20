@@ -98,16 +98,12 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function prepareRun(obj)
+            % Needs to be before call to parent to compute numberOfAverages
             obj.jitterSpacingPix = obj.rig.getDevice('Stage').um2pix(obj.jitterSpacing);
             obj.organizeSequence();
+
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
-
-            
-
-            
-
-            
             disp('prepared run')
         end
         
@@ -137,8 +133,6 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             p.addController(sceneVisible);
             disp('created presentation');
         end
-        
-        
         
         function prepareEpoch(obj, epoch)
             disp('preparing epoch')
