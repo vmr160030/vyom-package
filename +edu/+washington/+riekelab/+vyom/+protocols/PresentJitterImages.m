@@ -64,7 +64,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             obj.seqBgs = zeros(obj.numberOfImages,1);
             for a = 1:obj.numberOfImages
                 img_name = obj.imagePaths{a,1};
-                obj.seqBgs(a) = mean(imread(fullfile(obj.directory,img_name)), 'all');
+                temp_img=imread(fullfile(obj.directory,img_name));
+                obj.seqBgs(a) = mean(mean(temp_img))/255;
             end
 
             obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter^2);
@@ -122,6 +123,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             
             % Load image
             specificImage = imread(fullfile(obj.directory, obj.image_name));
+            disp(obj.backgroundIntensity);
+            disp(mean(mean(specificImage))/255);
             p.setBackgroundColor(obj.backgroundIntensity)   % Set background intensity
             
             % Prep to display image
@@ -165,9 +168,9 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             disp(obj.jitterY)
 
             
-            if obj.randomize
-                epoch.addParameter('seed',obj.seed);
-            end
+%             if obj.randomize
+%                 epoch.addParameter('seed',obj.seed);
+%             end
         end
 
         function tf = shouldContinuePreparingEpochs(obj)
