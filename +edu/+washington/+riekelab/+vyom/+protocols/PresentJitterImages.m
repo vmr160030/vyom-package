@@ -6,8 +6,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         stimTime    = 250 % in ms
         tailTime    = 250 % in ms
         fileFolder = 'flashImages'; % Folder containing images
-        backgroundIntensity = 0.5; % 0 - 1 (corresponds to image intensities in folder)
-        randomize = true; % whether to randomize images shown
+        %backgroundIntensity = 0.5; % 0 - 1 (corresponds to image intensities in folder)
+        %randomize = true; % whether to randomize images shown
 
         % Jitter parameters
         jitterSpacing = 50; % Spacing of jittered images (microns)
@@ -36,6 +36,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         seqJitterY
         jitterX
         jitterY
+        seqBgs
+        backgroundIntensity
         
     end
 
@@ -59,6 +61,11 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             end
             obj.imagePaths = obj.imagePaths(~cellfun(@isempty, obj.imagePaths(:,1)), :);
             obj.numberOfImages = size(obj.imagePaths,1);
+            obj.seqBgs = zeros(obj.numberOfImages,1);
+            for a = 1:obj.numberOfImages
+                img_name = obj.imagePaths{a,1};
+                obj.seqBgs(a) = mean(imread(fullfile(obj.directory,img_name)), 'all');
+            end
 
             obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter^2);
             obj.numberOfAverages = uint16(obj.numberOfRepsPerImage * size(obj.imagePaths,1));
@@ -82,18 +89,18 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             obj.seqJitterY = repelem(obj.seqJitterY,obj.numberOfImages);
             obj.seqJitterY = repmat(obj.seqJitterY,obj.numberOfReps,1);
 
-            % Create sequence of images to run through
-            if obj.randomize
-                obj.sequence = zeros(1,obj.numberOfAverages);
-                for ii = 1 : obj.numberOfRepsPerImage
-                    seq = randperm(size(obj.imagePaths,1));
-                    obj.sequence((ii-1)*length(seq)+(1:length(seq))) = seq;
-                end
-                obj.sequence = obj.sequence(1:obj.numberOfAverages);
-            else
-                obj.sequence =  (1:obj.numberOfImages)' * ones(1, obj.numberOfRepsPerImage);
-                obj.sequence = obj.sequence(:);
-            end
+            % Create sequence of images to run through. This doesn't work LOL.
+            % if obj.randomize
+            %     obj.sequence = zeros(1,obj.numberOfAverages);
+            %     for ii = 1 : obj.numberOfRepsPerImage
+            %         seq = randperm(size(obj.imagePaths,1));
+            %         obj.sequence((ii-1)*length(seq)+(1:length(seq))) = seq;
+            %     end
+            %     obj.sequence = obj.sequence(1:obj.numberOfAverages);
+            % else
+            obj.sequence =  (1:obj.numberOfImages)' * ones(1, obj.numberOfRepsPerImage);
+            obj.sequence = obj.sequence(:);
+            % end
 
         end
 
@@ -142,6 +149,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             obj.image_name = obj.imagePaths{img_idx,1};
             obj.jitterX = obj.seqJitterX(mod(obj.numEpochsCompleted,length(obj.seqJitterX)) + 1);
             obj.jitterY = obj.seqJitterY(mod(obj.numEpochsCompleted,length(obj.seqJitterY)) + 1);
+            obj.backgroundIntensity = obj.seqBgs(img_idx);
 
 
             % Add parameters to epoch
@@ -151,6 +159,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('jitterY',obj.jitterY);
             epoch.addParameter('jitterSpacing',obj.jitterSpacing);
             epoch.addParameter('jitterSpacingPix', obj.jitterSpacingPix);
+            epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
             disp(obj.image_name)
             disp(obj.jitterX)
             disp(obj.jitterY)
