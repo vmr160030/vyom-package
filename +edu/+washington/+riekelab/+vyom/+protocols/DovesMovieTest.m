@@ -72,7 +72,7 @@ classdef DovesMovieTest < manookinlab.protocols.ManookinLabStageProtocol
             
             % Load the image.
             % fileId = fopen([obj.pkgDir,'\doves\images\', obj.imageName],'rb','ieee-be');
-            fileId = fopen(['\doves\images\', 'test.iml'],'rb','ieee-be');
+            fileId = fopen(['C:\Users\Public\Documents\GitRepos\Symphony2\vyom-package\resources\doves\images\', 'test.iml'],'rb','ieee-be');
             img = fread(fileId, [1536 1024], 'uint16');
             fclose(fileId);
             
@@ -119,7 +119,7 @@ classdef DovesMovieTest < manookinlab.protocols.ManookinLabStageProtocol
                 obj.magnificationFactor = round(1/60*200/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel'));
             end
             % Save xTraj and yTraj to file
-            save([obj.pkgDir, '\doves\', obj.imageName, '_eyeTraj.mat'], 'obj.xTraj', 'obj.yTraj');
+            % save([obj.pkgDir, '\doves\', obj.imageName, '_eyeTraj.mat'], 'obj.xTraj', 'obj.yTraj');
         end
         
         function p = createPresentation(obj)
@@ -157,14 +157,14 @@ classdef DovesMovieTest < manookinlab.protocols.ManookinLabStageProtocol
                     p(2) = p0(2) + dy;
                 end
                 % Save scene image at current position to file
-                img = obj.imageMatrix;
-                % Upscale img by magnification factor
-                img = imresize(img, obj.magnificationFactor, 'nearest');
-                % crop img to canvas size around p
-                x0 = round(p(1) - obj.canvasSize(1)/2);
-                y0 = round(p(2) - obj.canvasSize(2)/2);
-                img = img(y0:y0+obj.canvasSize(2)-1, x0:x0+obj.canvasSize(1)-1);
-                imwrite(img, [obj.pkgDir, '\doves\', obj.imageName, '_scene_', num2str(round(time*1000)), '.png']);
+%                 img = obj.imageMatrix;
+%                 % Upscale img by magnification factor
+%                 img = imresize(img, obj.magnificationFactor, 'nearest');
+%                 % crop img to canvas size around p
+%                 x0 = round(p(1) - obj.canvasSize(1)/2);
+%                 y0 = round(p(2) - obj.canvasSize(2)/2);
+%                 img = img(y0:y0+obj.canvasSize(2)-1, x0:x0+obj.canvasSize(1)-1);
+%                 imwrite(img, [obj.pkgDir, '\doves\', obj.imageName, '_scene_', num2str(round(time*1000)), '.png']);
             end
 
             sceneVisible = stage.builtin.controllers.PropertyController(scene, 'visible', ...
