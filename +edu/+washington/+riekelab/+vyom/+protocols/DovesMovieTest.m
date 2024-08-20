@@ -83,13 +83,13 @@ classdef DovesMovieTest < manookinlab.protocols.ManookinLabStageProtocol
             obj.imageMatrix = uint8(img);
             
             %get appropriate eye trajectories, at 200Hz
-            if (obj.freezeFEMs) %freeze FEMs, hang on fixations
-                obj.xTraj = obj.im.FEMdata(obj.stimulusIndex).frozenX;
-                obj.yTraj = obj.im.FEMdata(obj.stimulusIndex).frozenY;
-            else %full FEM trajectories during fixations
-                obj.xTraj = obj.im.FEMdata(obj.stimulusIndex).eyeX;
-                obj.yTraj = obj.im.FEMdata(obj.stimulusIndex).eyeY;
-            end
+            % if (obj.freezeFEMs) %freeze FEMs, hang on fixations
+            %     obj.xTraj = obj.im.FEMdata(obj.stimulusIndex).frozenX;
+            %     obj.yTraj = obj.im.FEMdata(obj.stimulusIndex).frozenY;
+            % else %full FEM trajectories during fixations
+            %     obj.xTraj = obj.im.FEMdata(obj.stimulusIndex).eyeX;
+            %     obj.yTraj = obj.im.FEMdata(obj.stimulusIndex).eyeY;
+            % end
             obj.timeTraj = (0:(length(obj.xTraj)-1)) ./ 200; %sec
            
             %need to make eye trajectories for PRESENTATION relative to the center of the image and
@@ -98,14 +98,17 @@ classdef DovesMovieTest < manookinlab.protocols.ManookinLabStageProtocol
             %flipped for DOVES data (uses MATLAB image convention) and
             %stage (uses positive Y UP/negative Y DOWN), so flips cancel in
             %Y direction
-            obj.xTraj = -(obj.xTraj - 1536/2); %units=VH pixels
-            obj.yTraj = (obj.yTraj - 1024/2);
+            %obj.xTraj = -(obj.xTraj - 1536/2); %units=VH pixels
+            %obj.yTraj = (obj.yTraj - 1024/2);
             
             %also scale them to canvas pixels. 1 VH pixel = 1 arcmin = 3.3
             %um on monkey retina
             %canvasPix = (VHpix) * (um/VHpix)/(um/canvasPix)
-            obj.xTraj = obj.xTraj .* 3.3/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel');
-            obj.yTraj = obj.yTraj .* 3.3/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel');
+            %obj.xTraj = obj.xTraj .* 3.3/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel');
+            %obj.yTraj = obj.yTraj .* 3.3/obj.rig.getDevice('Stage').getConfigurationSetting('micronsPerPixel');
+
+            obj.xTraj = [linspace(0,200, 1024/4), linspace(200,-200, 1024/4), zeros(1,1024/2)];
+            obj.yTraj = [zeros(1,1024/2), linspace(0,200, 1024/4), linspace(200,-200, 1024/4)];
             
             % Load the fixations for the image.
             f = load([obj.pkgDir,'\doves\fixations\', obj.imageName, '.mat']);
