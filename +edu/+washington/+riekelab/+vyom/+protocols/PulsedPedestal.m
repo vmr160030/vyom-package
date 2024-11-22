@@ -130,6 +130,12 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('testIntensity', obj.testIntensity);
             epoch.addParameter('contrastDiff', obj.contrastDiff);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
+
+            % Display current params
+            disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
+            disp(['Stimulus contrast: ', num2str(obj.stimContrast)]);
+            disp(['Test square contrast: ', num2str(obj.testStimContrast)]);
+            disp(['Test square index: ', num2str(obj.testSquareIdx)]);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
