@@ -70,6 +70,12 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             % Create a sequence of test square indices, where each value in [1, 2, 3, 4] is repeated n_base_contrasts * n_contrast_diffs times
             obj.seqTestSquareIdxs = repmat([1, 2, 3, 4], 1, n_base_contrasts * n_contrast_diffs);
 
+            % Repeat each by the number of repeats
+            obj.seqBaseContrasts = repmat(obj.seqBaseContrasts, 1, obj.numberOfRepeats);
+            obj.seqContrastDiffs = repmat(obj.seqContrastDiffs, 1, obj.numberOfRepeats);
+            obj.seqTestContrasts = repmat(obj.seqTestContrasts, 1, obj.numberOfRepeats);
+            obj.seqTestSquareIdxs = repmat(obj.seqTestSquareIdxs, 1, obj.numberOfRepeats);
+
             % Check that sequence lengths match the number of epochs
             assert(length(obj.seqBaseContrasts) == obj.numberOfAverages, 'Number of epochs does not match sequence length');
             assert(length(obj.seqContrastDiffs) == obj.numberOfAverages, 'Number of epochs does not match sequence length');
