@@ -4,34 +4,29 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         preTime = 500                   % Stimulus leading duration (ms)
         stimTime = 50                   % Stimulus duration (ms) 16, 33, 66, 133 ms in Pokorny (1997)
         tailTime = 500                  % Stimulus trailing duration (ms)
-        gridWidth = 300                 % Width of mapping grid (microns)
         stixelSize = 750                % Stixel edge size (microns) 1-degree in Pokorny (1997)
         separationSize = 42             % Separation between squares 3.25arcmin ~= 0.054 degrees in Pokorny (1997)
-        contrasts = [-0.3527   -0.1083    0.1362    0.3806    0.6250]                  % Contrast (0 - 1) ranges computed from those used in Pokorny (1997)
-        %contrastDiffs = 1.6              % Differential contrast of test square
-        chromaticClass = 'achromatic'   % Chromatic type
+        contrasts = [-0.6 -0.4 -0.2 0.2 0.4 0.6]                  % Contrast (0 - 1) ranges computed from those used in Pokorny (1997)
+        contrastDiffs = [-0.3 -0.2 -0.1 -0.05 0.05 0.1 0.2 0.3]             % Differential contrast of test square
         backgroundIntensity = 0.5       % Background light intensity (0-1)
-        onlineAnalysis = 'extracellular' % Online analysis type.
-        numberOfAverages = uint16(144)  % Number of epochs
+        numberOfRepeats = uint16(10)     % Number of repeats
     end
     
     properties (Hidden)
         ampType
-        onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
-        chromaticClassType = symphonyui.core.PropertyType('char','row',{'achromatic', 'BY', 'RG'})
         stixelSizePix
-        gridWidthPix
         separationSizePix
-        idxContrast=1
-        contrast
         intensity
         testIntensity
         stimContrast        
         testStimContrast
-        %positions
-        %position
-        %numChecks
+        contrastDiff
         testSquareIdx
+        numberOfAverages % Total number of epochs = repeats * length(contrasts) * length(contrastDiffs) * 4
+        seqBaseContrasts
+        seqContrastDiffs
+        seqTestContrasts
+        seqTestSquareIdxs
     end
     
     methods
@@ -45,170 +40,88 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
             obj.separationSizePix = obj.rig.getDevice('Stage').um2pix(obj.separationSize);
-            obj.gridWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gridWidth);
+            obj.organizeParameters();
+        end
 
-            % Get the number of checkers
-            %edgeChecks = ceil(obj.gridWidthPix / obj.stixelSizePix);
-            %obj.numChecks = edgeChecks^2;
-            %[x,y] = meshgrid(linspace(-obj.stixelSizePix*edgeChecks/2+obj.stixelSizePix/2,obj.stixelSizePix*edgeChecks/2-obj.stixelSizePix/2,edgeChecks));
-            %obj.positions = [x(:), y(:)];
-            
-            % Online analysis figures
-            %obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
-            
-%             if ~strcmp(obj.onlineAnalysis, 'none')
-%                 obj.showFigure('manookinlab.figures.MeanResponseFigure', ...
-%                     obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
-%                     'sweepColor',[0,0,0],...
-%                     'groupBy',{'frameRate'});
-%                 
-%                 obj.showFigure('manookinlab.figures.FlashMapperFigure', ...
-%                     obj.rig.getDevice(obj.amp),'recordingType',obj.onlineAnalysis,...
-%                     'preTime',obj.preTime,...
-%                     'stimTime',obj.stimTime,...
-%                     'stixelSize',obj.stixelSize,...
-%                     'gridWidth',obj.gridWidth);
-%             end
+        function organizeParameters(obj)
+            n_base_contrasts = length(obj.contrasts);
+            n_contrast_diffs = length(obj.contrastDiffs);
+            obj.numberOfAverages = obj.numberOfRepeats * n_base_contrasts * n_contrast_diffs * 4;
+
+            % Create a sequence of base contrasts, where ever value in contrasts is repeated 4 * n_contrast_diffs times
+            obj.seqBaseContrasts = [];
+            for i = 1:n_base_contrasts
+                obj.seqBaseContrasts = [obj.seqBaseContrasts, repmat(obj.contrasts(i), 1, 4*n_contrast_diffs)];
+            end
+
+            % Create a sequence of contrast differences, where each value in contrastDiffs is repeated 4 times
+            obj.seqContrastDiffs = [];
+            for i = 1:n_contrast_diffs
+                obj.seqContrastDiffs = [obj.seqContrastDiffs, repmat(obj.contrastDiffs(i), 1, 4)];
+            end
+            % now repeat the sequence of contrast differences n_base_contrasts times
+            obj.seqContrastDiffs = repmat(obj.seqContrastDiffs, 1, n_base_contrasts);
+
+            % Create a sequence of test contrasts, converting the contrast differences to actual contrasts
+            obj.seqTestContrasts = obj.seqBaseContrasts + obj.seqContrastDiffs;
+
+            % Create a sequence of test square indices, where each value in [1, 2, 3, 4] is repeated n_base_contrasts * n_contrast_diffs times
+            obj.seqTestSquareIdxs = repmat([1, 2, 3, 4], 1, n_base_contrasts * n_contrast_diffs);
+
+            % Check that sequence lengths match the number of epochs
+            assert(length(obj.seqBaseContrasts) == obj.numberOfAverages, 'Number of epochs does not match sequence length');
+            assert(length(obj.seqContrastDiffs) == obj.numberOfAverages, 'Number of epochs does not match sequence length');
+            assert(length(obj.seqTestContrasts) == obj.numberOfAverages, 'Number of epochs does not match sequence length');
+            assert(length(obj.seqTestSquareIdxs) == obj.numberOfAverages, 'Number of epochs does not match sequence length');
         end
         
         function p = createPresentation(obj)
 
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
-            
-            idx_square = 1;
 
-            rect = stage.builtin.stimuli.Rectangle();
-            rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 1] + ...
-                obj.stixelSizePix*0.5*[1 1];
-            rect.orientation = 0;
-            if idx_square==obj.testSquareIdx
-                rect.color = obj.testIntensity;
-            else
-                rect.color = obj.intensity;
-            end
-            idx_square = idx_square+1;
-            % Add the stimulus to the presentation.
-            p.addStimulus(rect);
-            barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-            @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-            p.addController(barVisible);
+            % Position of the square centers. [x, y] separationSizePix away from the canvas center.
+            % Order is top-left, top-right, bottom-left, bottom-right.
+            arr_pos = [[1 1];[-1 1]; [1 -1]; [-1 -1]];
+            arr_delta_pos = [[0 0];[-1 0]; [0 -1]; [-1 -1]]*obj.stixelSizePix;
             
-            
-            % Add 4 rectangles
-            rect = stage.builtin.stimuli.Rectangle();
-            rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.separationSizePix*[-1 1]...
-                + [-obj.stixelSizePix 0] + obj.stixelSizePix*0.5*[1 1];
-            rect.orientation = 0;
-            if idx_square==obj.testSquareIdx
-                rect.color = obj.testIntensity;
-            else
-                rect.color = obj.intensity;
-            end
-            idx_square = idx_square+1;
-            % Add the stimulus to the presentation.
-            p.addStimulus(rect);
-            barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-            @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-            p.addController(barVisible);
-            
-            rect = stage.builtin.stimuli.Rectangle();
-            rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.separationSizePix*[1 -1]...
-                + [0 -obj.stixelSizePix] + obj.stixelSizePix*0.5*[1 1];
-            rect.orientation = 0;
-            if idx_square==obj.testSquareIdx
-                rect.color = obj.testIntensity;
-            else
-                rect.color = obj.intensity;
-            end
-            idx_square = idx_square+1;
-            % Add the stimulus to the presentation.
-            p.addStimulus(rect);
-            barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-            @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-            p.addController(barVisible);
-            
-            rect = stage.builtin.stimuli.Rectangle();
-            rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.separationSizePix*[-1 -1]...
-                + [-obj.stixelSizePix -obj.stixelSizePix] + obj.stixelSizePix*0.5*[1 1];
-            rect.orientation = 0;
-            if idx_square==obj.testSquareIdx
-                rect.color = obj.testIntensity;
-            else
-                rect.color = obj.intensity;
-            end
-            % Add the stimulus to the presentation.
-            p.addStimulus(rect);
-            barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
-            @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-            p.addController(barVisible);
+            for idx_square=1:4
+                rect = stage.builtin.stimuli.Rectangle();
+                rect.size = obj.stixelSizePix*ones(1,2);
+                rect.position = obj.canvasSize/2 + ...
+                    obj.separationSizePix*arr_pos(idx_square, :) + ...
+                    arr_delta_pos(idx_square, :) + ...
+                    obj.stixelSizePix*0.5*[1 1];
+                rect.orientation = 0;
+
+                if idx_square==obj.testSquareIdx                    
+                    rect.color = obj.testIntensity;
+                else
+                    rect.color = obj.intensity;
+                end
+                p.addStimulus(rect);
+                rectVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
+                    @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
+                p.addController(rectVisible);
+           end
         end
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-            
-              %obj.stimContrast = randsample(obj.contrasts, 1);
-              %tol = 0.0001;
-              %testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
-              %obj.testStimContrast = randsample(testContrasts, 1);
-              
-              % Cycle through contrasts and test square contrasts
-              obj.stimContrast = obj.contrasts(obj.idxContrast);
-              tol = 0.0001;
-              testContrasts = obj.contrasts(abs(obj.contrasts-obj.stimContrast)>tol);
-              obj.testStimContrast = testContrasts(mod(obj.numEpochsCompleted,length(testContrasts))+1);
-              if mod(obj.numEpochsCompleted+1,length(testContrasts))==0
-                 obj.idxContrast = mod(obj.idxContrast, length(obj.contrasts))+1;
-              end
-              
-%             if mod(obj.numEpochsCompleted,2) == 0
-%                 obj.stimContrast = obj.contrast;
-%             else
-%                 obj.stimContrast = -obj.contrast;
-%             end
-            
-            % Check the chromatic class
-%             if strcmp(obj.chromaticClass, 'BY') % blue-yellow
-%                 if obj.stimContrast > 0
-%                     flashColor = 'blue';
-%                     obj.intensity = [0,0,obj.contrast]*obj.backgroundIntensity + obj.backgroundIntensity;
-%                 else
-%                     flashColor = 'yellow';
-%                     obj.intensity = [obj.contrast*ones(1,2),0]*obj.backgroundIntensity + obj.backgroundIntensity;
-%                 end
-%             elseif strcmp(obj.chromaticClass, 'RG') % red-green
-%                 if obj.stimContrast > 0
-%                     flashColor = 'red';
-%                     obj.intensity = [obj.contrast,0,0]*obj.backgroundIntensity + obj.backgroundIntensity;
-%                 else
-%                     flashColor = 'green';
-%                     obj.intensity = [0,obj.contrast,0]*obj.backgroundIntensity + obj.backgroundIntensity;
-%                 end
-%             else
+            obj.stimContrast = obj.seqBaseContrasts(obj.numEpochsCompleted+1);
+            obj.testStimContrast = obj.seqTestContrasts(obj.numEpochsCompleted+1);
             obj.intensity = obj.stimContrast*obj.backgroundIntensity+obj.backgroundIntensity;
             obj.testIntensity = obj.testStimContrast*obj.backgroundIntensity+obj.backgroundIntensity;
-            if obj.stimContrast > 0
-                flashColor = 'white';
-            else
-                flashColor = 'black';
-            end
-            %end
+            obj.testSquareIdx = obj.seqTestSquareIdxs(obj.numEpochsCompleted+1);
+            obj.contrastDiff = obj.seqContrastDiffs(obj.numEpochsCompleted+1);
             
-            %obj.position = obj.positions(mod(floor(obj.numEpochsCompleted/2),length(obj.positions))+1,:);
-            % Choose square with different intensity
-            obj.testSquareIdx = randi(4);
-            
-            epoch.addParameter('testSquareIdx',obj.testSquareIdx);
-            %epoch.addParameter('numChecks',obj.numChecks);
-            %epoch.addParameter('position', obj.position);
-            epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
             epoch.addParameter('stimContrast', obj.stimContrast);
             epoch.addParameter('testStimContrast', obj.testStimContrast);
-            epoch.addParameter('flashColor', flashColor);
+            epoch.addParameter('testSquareIdx',obj.testSquareIdx);
+            epoch.addParameter('intensity', obj.intensity);
+            epoch.addParameter('testIntensity', obj.testIntensity);
+            epoch.addParameter('contrastDiff', obj.contrastDiff);
+            epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
