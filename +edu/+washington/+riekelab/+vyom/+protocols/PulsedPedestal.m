@@ -37,6 +37,8 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
+            n_base_contrasts = length(obj.contrasts);
+            n_contrast_diffs = length(obj.contrastDiffs);
             obj.numberOfAverages = obj.numberOfRepeats * n_base_contrasts * n_contrast_diffs * 4;
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
