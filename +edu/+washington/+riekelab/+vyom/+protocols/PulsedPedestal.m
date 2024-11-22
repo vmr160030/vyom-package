@@ -37,6 +37,7 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
+            obj.numberOfAverages = obj.numberOfRepeats * n_base_contrasts * n_contrast_diffs * 4;
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
             obj.separationSizePix = obj.rig.getDevice('Stage').um2pix(obj.separationSize);
@@ -46,7 +47,6 @@ classdef PulsedPedestal < manookinlab.protocols.ManookinLabStageProtocol
         function organizeParameters(obj)
             n_base_contrasts = length(obj.contrasts);
             n_contrast_diffs = length(obj.contrastDiffs);
-            obj.numberOfAverages = obj.numberOfRepeats * n_base_contrasts * n_contrast_diffs * 4;
 
             % Create a sequence of base contrasts, where ever value in contrasts is repeated 4 * n_contrast_diffs times
             obj.seqBaseContrasts = [];
