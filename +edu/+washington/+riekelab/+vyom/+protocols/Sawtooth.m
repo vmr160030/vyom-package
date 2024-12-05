@@ -47,15 +47,11 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function organizeParameters(obj)
-            obj.seqContrasts = [];
-            obj.seqTemporalFrequencies = [];
-            
-            % Create a sequence of contrasts, where each value in contrasts is repeated n_temporal_frequencies times
-            for i = 1:obj.n_contrasts
-                obj.seqContrasts = [obj.seqContrasts, repmat(obj.contrasts(i), 1, obj.n_temporal_frequencies)];
-            end
+            % Create a sequence of contrasts, where each contrast set is repeated n_temporal_frequencies times
+            obj.seqContrasts = repmat(obj.contrasts, 1, obj.n_temporal_frequencies);
 
             % Create a sequence of temporal frequencies, where each value in temporalFrequencies is repeated n_contrasts times
+            obj.seqTemporalFrequencies = [];
             for i = 1:obj.n_temporal_frequencies
                 obj.seqTemporalFrequencies = [obj.seqTemporalFrequencies, obj.temporalFrequencies(i)*ones(1, obj.n_contrasts)];
             end
