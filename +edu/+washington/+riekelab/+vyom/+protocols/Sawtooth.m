@@ -90,7 +90,7 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
             p.setBackgroundColor(obj.backgroundIntensity);
             rect = stage.builtin.stimuli.Rectangle();
             rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.stixelSizePix*0.5*[1 1];
+            rect.position = obj.canvasSize/2;
             rect.orientation = 0;
             p.addStimulus(rect);
             rectVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
