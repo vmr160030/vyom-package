@@ -6,7 +6,7 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         tailTime = 500                  % Stimulus trailing duration (ms)
         stixelSizeUm = 1000               % Stixel edge size (microns)
         contrasts = [0.05, 0.1, 0.2]       % Michelson Contrast (0 - 1) range. (Imax - Imin) / (Imax + Imin).
-        temporalFrequencies = [0.61, 1.22, 2.44, 4.88, 9.76] % Temporal frequencies (Hz)
+        temporalFrequencies = [0.61, 1.22, 2.44, 4.88, 9.76] % Temporal frequencies (Hz). REMEMBER TO AVOID ALIASING BY REMAINING BELOW REFRESHRATE/2.
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         numberOfRepeats = uint16(10)    % Number of repeats
         randomizeOrder = true          % Randomize the order of the contrasts
