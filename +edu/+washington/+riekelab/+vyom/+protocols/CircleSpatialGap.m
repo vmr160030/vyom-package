@@ -1,8 +1,8 @@
-classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
+classdef CircleSpatialGap < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
         preTime = 1000                  % Pre-stimulus time (ms)
-        stimTime = 80                   % Stimulus duration (ms)
+        stimTime = 106                   % Stimulus duration (ms)
         tailTime = 1000                 % Post-stimulus time (ms)
         circleRadiusUm = 400            % Circle radius (microns)
         strokeWidthUm = 100             % Stroke width (microns)
