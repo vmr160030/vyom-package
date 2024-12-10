@@ -1,4 +1,4 @@
-classdef CircleSpatialGap < manookinlab.protocols.ManookinLabStageProtocol
+classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
         preTime = 1000                  % Pre-stimulus time (ms)
