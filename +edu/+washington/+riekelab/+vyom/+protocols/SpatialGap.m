@@ -16,6 +16,8 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
         ampType
         circleRadiusPix
         strokeWidthPix
+        gapSizePix
+        gapAngle
         currentGap
         currentContrast
         numberOfAverages % Total number of epochs = repeats * length(spatialGaps) * 2 (for on/off)
@@ -62,11 +64,6 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             innerRadius = outerRadius - obj.strokeWidthPix;
             gapSizePix = obj.rig.getDevice('Stage').um2pix(obj.currentGap);
             
-            % Compute the angle corresponding to the gap size
-            circumference = 2 * pi * outerRadius;
-            gapAngle = (gapSizePix / circumference) * 2 * pi;
-            halfGapAngle = gapAngle / 2;
-            
             [X, Y] = meshgrid(1:2*outerRadius, 1:2*outerRadius);
             X = X - outerRadius;
             Y = Y - outerRadius;
@@ -75,6 +72,7 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             hollowCircle = outerCircle & ~innerCircle;
             
             % Create the gap centered on the right edge of the circle
+            halfGapAngle = obj.gapAngle / 2;
             gapMask = atan2(Y, X) > -halfGapAngle & atan2(Y, X) < halfGapAngle;
             hollowCircle(gapMask) = 0;
             
@@ -88,7 +86,7 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
         
         function p = createPresentation(obj)
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
-            p.setBackgroundColor(0.5);
+            p.setBackgroundColor(obj.backgroundIntensity);
             
             % Create the circle stimulus using Image
             image = stage.builtin.stimuli.Image(obj.computeImage());
@@ -109,9 +107,21 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             
             obj.currentGap = obj.seqSpatialGaps(obj.numEpochsCompleted+1);
             obj.currentContrast = obj.seqContrasts(obj.numEpochsCompleted+1);
+
+            % Compute the angle corresponding to the gap size
+            circumferencePix = 2 * pi * obj.circleRadiusPix;
+            obj.gapAngle = (gapSizePix / circumferencePix) * 2 * pi;
             epoch.addParameter('currentGap', obj.currentGap);
             epoch.addParameter('currentContrast', obj.currentContrast);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
+            epoch.addParameter('circleRadiusPix', obj.circleRadiusPix);
+            epoch.addParameter('strokeWidthPix', obj.strokeWidthPix);
+            epoch.addParameter('gapAngle', obj.gapAngle);
+            % display all current params
+            disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
+            disp(['Current gap: ', num2str(obj.seqSpatialGaps(i)), ' microns']);
+            disp(['Current gap angle: ', num2str(obj.gapAngle)]);
+            disp(['Current contrast: ', num2str(obj.seqContrasts(i))]);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
