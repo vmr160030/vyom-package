@@ -96,7 +96,7 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             % Create the circle stimulus using Image
             image = stage.builtin.stimuli.Image(obj.computeImage());
             image.size = [obj.circleRadiusPix * 2, obj.circleRadiusPix * 2];
-            image.position = [obj.canvasSize(1)/2, obj.canvasSize(2)/2];
+            image.position = [obj.canvasSize(1)/2 + obj.circleRadiusPix, obj.canvasSize(2)/2];
             
             % Add the circle stimulus to the presentation
             p.addStimulus(image);
@@ -127,7 +127,8 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             % display all current params
             disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
             disp(['Current gap: ', num2str(obj.currentGapUm)]);
-            disp(['Current gap angle: ', num2str(obj.currentGapAngle)]);
+            disp(['Current gap angle: ', num2str(obj.currentGapAngle)], ' radians');
+            disp(['Current gap angle: ', num2str(rad2deg(obj.currentGapAngle))], ' degrees');
             disp(['Current contrast: ', num2str(obj.currentContrast)]);
         end
         
