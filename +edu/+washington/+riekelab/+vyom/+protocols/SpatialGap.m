@@ -78,7 +78,7 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             th(1:nonsmooth, :) = th(1:nonsmooth, :) + pi; % map top half to [pi, 2pi]
             th = rad2deg(th); % convert to degrees
             
-            gapMask = th < rad2deg(halfGapAngle) | th > (360 - rad2deg(halfGapAngle));
+            gapMask = th < rad2deg(halfGapAngle) & th > (360 - rad2deg(halfGapAngle));
             hollowCircle(gapMask) = 0;
             
             % Convert to image matrix
