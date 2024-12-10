@@ -50,8 +50,8 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
                 obj.seqSpatialGaps = obj.spatialGapsUm;
             end
             
-            obj.seqContrasts = [1, 0];
-            obj.seqContrasts = repmat(obj.seqContrasts, 1, obj.n_spatial_gaps);
+            obj.seqContrasts = ones(1, obj.n_spatial_gaps); % Increment
+            obj.seqContrasts = [obj.seqContrasts, -1*ones(1, obj.n_spatial_gaps)]; % Decrement
             
             % Repeat twice for on/off
             obj.seqSpatialGaps = repmat(obj.seqSpatialGaps, 1, 2);            
