@@ -120,9 +120,9 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('currentGapAngle', obj.currentGapAngle);
             % display all current params
             disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
-            disp(['Current gap: ', num2str(obj.seqSpatialGaps(i)), ' microns']);
+            disp(['Current gap: ', num2str(obj.currentGapUm)]);
             disp(['Current gap angle: ', num2str(obj.currentGapAngle)]);
-            disp(['Current contrast: ', num2str(obj.seqContrasts(i))]);
+            disp(['Current contrast: ', num2str(obj.currentContrast)]);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
