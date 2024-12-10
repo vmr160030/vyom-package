@@ -93,14 +93,10 @@ classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
             
             % Create controllers for the stimuli visibility
             imageVisible = stage.builtin.controllers.PropertyController(image, 'visible', ...
-                @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
+                @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3...
+                && ~(state.time >= (obj.preTime + obj.stimTime + obj.preGapTime) * 1e-3 && ...
+                    state.time < (obj.preTime + obj.stimTime + obj.preGapTime + obj.currentTemporalGap) * 1e-3));
             p.addController(imageVisible);
-
-                % Create a controller for the temporal gap
-            temporalGapVisible = stage.builtin.controllers.PropertyController(image, 'visible', ...
-                @(state)~(state.time >= (obj.preTime + obj.stimTime + obj.preGapTime) * 1e-3 && ...
-                        state.time < (obj.preTime + obj.stimTime + obj.preGapTime + obj.currentTemporalGap) * 1e-3));
-            p.addController(temporalGapVisible);
         end
         
         function prepareEpoch(obj, epoch)
