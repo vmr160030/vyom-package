@@ -4,8 +4,8 @@ classdef CircleSpatialGap < manookinlab.protocols.ManookinLabStageProtocol
         preTime = 1000                  % Pre-stimulus time (ms)
         stimTime = 106                   % Stimulus duration (ms)
         tailTime = 1000                 % Post-stimulus time (ms)
-        circleRadiusUm = 400            % Circle radius (microns)
-        strokeWidthUm = 100             % Stroke width (microns)
+        circleRadiusUm = 200            % Circle radius (microns)
+        strokeWidthUm = 50             % Stroke width (microns)
         spatialGapsUm = [0, 200]        % Spatial gap sizes (microns)
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         numberOfRepeats = uint16(10)    % Number of repeats

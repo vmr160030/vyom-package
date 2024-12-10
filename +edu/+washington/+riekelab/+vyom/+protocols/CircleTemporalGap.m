@@ -5,8 +5,8 @@ classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
         stimTime = 100                   % Stimulus duration (ms)
         preGapTime = 40                 % Time before gap (ms)
         tailTime = 1000                 % Post-stimulus time (ms)
-        circleRadiusUm = 400            % Circle radius (microns)
-        strokeWidthUm = 100             % Stroke width (microns)
+        circleRadiusUm = 200            % Circle radius (microns)
+        strokeWidthUm = 50             % Stroke width (microns)
         temporalGaps = [0, 100]        % Temporal gap periods (ms)
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         numberOfRepeats = uint16(10)    % Number of repeats
