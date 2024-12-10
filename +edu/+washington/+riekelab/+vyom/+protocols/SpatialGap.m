@@ -76,7 +76,7 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             % Shift mapping to [0, 2pi]
             th = th + pi;
             
-            gapMask = th < halfGapAngle | th > (2*pi - rad2deg(halfGapAngle));
+            gapMask = th < halfGapAngle | th > (2*pi - halfGapAngle);
             hollowCircle(gapMask) = 0;
             
             % Convert to image matrix
