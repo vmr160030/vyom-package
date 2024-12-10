@@ -73,12 +73,10 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             % Create the gap centered on the right edge of the circle
             halfGapAngle = obj.currentGapAngle / 2;
             th = atan2(Y, X); % map to [-pi, pi]
-            th = abs(th - pi/2); % shift mapping to [0, pi] clockwise starting at right
-            nonsmooth = find(diff(th, 1, 1) > pi/2, 1) + 1; % Add 1 to index all values up to this
-            th(1:nonsmooth, :) = th(1:nonsmooth, :) + pi; % map top half to [pi, 2pi]
-            th = rad2deg(th); % convert to degrees
+            % Shift mapping to [0, 2pi]
+            th = th + pi;
             
-            gapMask = th < rad2deg(halfGapAngle) & th > (360 - rad2deg(halfGapAngle));
+            gapMask = th < halfGapAngle | th > (2*pi - rad2deg(halfGapAngle));
             hollowCircle(gapMask) = 0;
             
             % Convert to image matrix
