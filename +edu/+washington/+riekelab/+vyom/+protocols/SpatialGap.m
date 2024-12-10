@@ -127,8 +127,8 @@ classdef SpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             % display all current params
             disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
             disp(['Current gap: ', num2str(obj.currentGapUm)]);
-            disp(['Current gap angle: ', num2str(obj.currentGapAngle)], ' radians');
-            disp(['Current gap angle: ', num2str(rad2deg(obj.currentGapAngle))], ' degrees');
+            disp(['Current gap angle: ', num2str(obj.currentGapAngle), ' radians']);
+            disp(['Current gap angle: ', num2str(rad2deg(obj.currentGapAngle)), ' degrees']);
             disp(['Current contrast: ', num2str(obj.currentContrast)]);
         end
         
