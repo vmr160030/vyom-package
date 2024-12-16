@@ -53,15 +53,23 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         end
         
         function prepareRun(obj)
+            % compute number of averages
             obj.n_contrasts = length(obj.contrasts);
             obj.n_temporal_frequencies = length(obj.temporalFrequencies);
             obj.numberOfAverages = obj.numberOfRepeats * obj.n_contrasts * obj.n_temporal_frequencies * 2;
+
+            % Call the base method.
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
+
+            % Get the stixel size in pixels.
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSizeUm);
             disp(['Number of averages: ', num2str(obj.numberOfAverages)]);
             disp(['Stixel size (um): ', num2str(obj.stixelSizeUm)]);
             disp(['Stixel size (pix): ', num2str(obj.stixelSizePix)]);
             obj.organizeParameters();
+
+            % Plot Amp1 figure for lightmeter calibrations
+            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
         end
 
         function organizeParameters(obj)
