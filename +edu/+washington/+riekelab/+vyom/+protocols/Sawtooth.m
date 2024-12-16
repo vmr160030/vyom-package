@@ -37,17 +37,13 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function controllerDidStartHardware(obj)
-            controllerDidStartHardware@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);
-            % if obj.numEpochsPrepared == 1
-            %     obj.rig.getDevice('Stage').play(obj.createPresentation());
-            % else
-            %     obj.rig.getDevice('Stage').replay();
-            % end
-            
+            controllerDidStartHardware@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);            
             % If current unique stim is same as previous, replay the same stim
             if obj.numEpochsPrepared > 1 && obj.currentUniqueStim == obj.seqUniqueStim(obj.numEpochsPrepared-1)
+                disp('Replaying previous stimulus');
                 obj.rig.getDevice('Stage').replay();
             else
+                disp('Creating new stimulus');
                 obj.rig.getDevice('Stage').play(obj.createPresentation());
             end
         end
@@ -175,6 +171,7 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
             disp(['Stimulus contrast: ', num2str(obj.currentContrast)]);
             disp(['Temporal frequency: ', num2str(obj.currentFrequency)]);
             disp(['Rapid On/Off: ', num2str(obj.currentRapidOnOff)]);
+            disp(['Unique Stim: ', num2str(obj.currentUniqueStim)]);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
