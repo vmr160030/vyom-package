@@ -6,7 +6,7 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         tailTime = 500                  % Stimulus trailing duration (ms)
         stixelSizeUm = 1000               % Stixel edge size (microns)
         contrasts = [0.05, 0.1, 0.2]       % Michelson Contrast (0 - 1) range. (Imax - Imin) / (Imax + Imin).
-        temporalFrequencies = [0.61, 1.22, 2.44, 4.88, 9.76] % Temporal frequencies (Hz). REMEMBER TO AVOID ALIASING BY REMAINING BELOW REFRESHRATE/2.
+        temporalFrequencies = [0.61, 1.22, 2.44, 4.88, 9.76, 19.52, 39.04] % Temporal frequencies (Hz). REMEMBER TO AVOID ALIASING BY REMAINING BELOW REFRESHRATE/2.
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         numberOfRepeats = uint16(10)    % Number of repeats
         randomizeOrder = true          % Randomize the order of the contrasts
@@ -22,6 +22,8 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         seqContrasts
         seqTemporalFrequencies
         seqRapidOnOff
+        seqUniqueStim
+        currentUniqueStim
         currentRapidOnOff
         n_contrasts
         n_temporal_frequencies
@@ -32,6 +34,22 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
             didSetRig@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);
             
             [obj.amp, obj.ampType] = obj.createDeviceNamesProperty('Amp');
+        end
+
+        function controllerDidStartHardware(obj)
+            controllerDidStartHardware@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);
+            % if obj.numEpochsPrepared == 1
+            %     obj.rig.getDevice('Stage').play(obj.createPresentation());
+            % else
+            %     obj.rig.getDevice('Stage').replay();
+            % end
+            
+            % If current unique stim is same as previous, replay the same stim
+            if obj.numEpochsPrepared > 1 && obj.currentUniqueStim == obj.seqUniqueStim(obj.numEpochsPrepared-1)
+                obj.rig.getDevice('Stage').replay();
+            else
+                obj.rig.getDevice('Stage').play(obj.createPresentation());
+            end
         end
         
         function prepareRun(obj)
@@ -62,9 +80,19 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
             obj.seqRapidOnOff = [true(1, length(obj.seqContrasts)/2), false(1, length(obj.seqContrasts)/2)];
 
             % Repeat each by the number of repeats
+            n_unique_stim = length(obj.seqContrasts);
+            obj.seqUniqueStim = 1:n_unique_stim;
+            obj.seqUniqueStim = repmat(obj.seqUniqueStim, 1, obj.numberOfRepeats);
             obj.seqContrasts = repmat(obj.seqContrasts, 1, obj.numberOfRepeats);
             obj.seqTemporalFrequencies = repmat(obj.seqTemporalFrequencies, 1, obj.numberOfRepeats);
             obj.seqRapidOnOff = repmat(obj.seqRapidOnOff, 1, obj.numberOfRepeats);
+
+            % Order sequences so that unique stimuli are all presented before repeating
+            [obj.seqUniqueStim, order] = sort(obj.seqUniqueStim);
+            obj.seqContrasts = obj.seqContrasts(order);
+            obj.seqTemporalFrequencies = obj.seqTemporalFrequencies(order);
+            obj.seqRapidOnOff = obj.seqRapidOnOff(order);
+
 
             % Check that sequence lengths match the number of epochs
             assert(length(obj.seqContrasts) == obj.numberOfAverages, 'Number of epochs does not match contrast sequence length');
@@ -77,6 +105,7 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
                 obj.seqContrasts = obj.seqContrasts(order);
                 obj.seqTemporalFrequencies = obj.seqTemporalFrequencies(order);
                 obj.seqRapidOnOff = obj.seqRapidOnOff(order);
+                obj.seqUniqueStim = obj.seqUniqueStim(order);
             end
         end
         
@@ -125,11 +154,13 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
             obj.currentContrast = obj.seqContrasts(obj.numEpochsCompleted+1);
             obj.currentFrequency = obj.seqTemporalFrequencies(obj.numEpochsCompleted+1);
             obj.currentRapidOnOff = obj.seqRapidOnOff(obj.numEpochsCompleted+1);
+            obj.currentUniqueStim = obj.seqUniqueStim(obj.numEpochsCompleted+1);
             
             epoch.addParameter('currentContrast', obj.currentContrast);
             epoch.addParameter('currentFrequency', obj.currentFrequency);
             epoch.addParameter('currentRapidOnOff', obj.currentRapidOnOff);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
+            epoch.addParameter('currentUniqueStim', obj.currentUniqueStim);
 
             % Display current params
             disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
