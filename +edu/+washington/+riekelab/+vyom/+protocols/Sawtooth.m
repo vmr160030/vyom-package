@@ -37,14 +37,18 @@ classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function controllerDidStartHardware(obj)
-            controllerDidStartHardware@edu.washington.riekelab.protocols.RiekeLabStageProtocol(obj);            
-            % If current unique stim is same as previous, replay the same stim
-            if obj.numEpochsPrepared > 1 && obj.currentUniqueStim == obj.seqUniqueStim(obj.numEpochsPrepared-1)
-                disp('Replaying previous stimulus');
-                obj.rig.getDevice('Stage').replay();
-            else
-                disp('Creating new stimulus');
-                obj.rig.getDevice('Stage').play(obj.createPresentation());
+            controllerDidStartHardware@edu.washington.riekelab.protocols.RiekeLabProtocol(obj);
+            
+            if obj.waitingForHardwareToStart
+                obj.waitingForHardwareToStart = false;
+                % If current unique stim is same as previous, replay the same stim
+                if obj.numEpochsPrepared > 1 && obj.currentUniqueStim == obj.seqUniqueStim(obj.numEpochsPrepared-1)
+                    disp('Replaying previous stimulus');
+                    obj.rig.getDevice('Stage').replay();
+                else
+                    disp('Creating new stimulus');
+                    obj.rig.getDevice('Stage').play(obj.createPresentation());
+                end
             end
         end
         
