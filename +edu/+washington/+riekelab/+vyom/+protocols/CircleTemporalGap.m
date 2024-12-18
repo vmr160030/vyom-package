@@ -92,12 +92,14 @@ classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
-            % Define center positions of 2 images
-            positions = [obj.canvasSize(1)/2 - obj.boundingBoxPix/2, obj.canvasSize(2)/2; ...
-                         obj.canvasSize(1)/2 + obj.boundingBoxPix/2, obj.canvasSize(2)/2];
+            % Define center positions of 4 images
+            positions = [obj.canvasSize(1)/2 - obj.boundingBoxPix/2, obj.canvasSize(2)/2 - obj.boundingBoxPix/2; ...
+                         obj.canvasSize(1)/2 - obj.boundingBoxPix/2, obj.canvasSize(2)/2 + obj.boundingBoxPix/2;...
+                         obj.canvasSize(1)/2 + obj.boundingBoxPix/2, obj.canvasSize(2)/2 - obj.boundingBoxPix/2; ...
+                         obj.canvasSize(1)/2 + obj.boundingBoxPix/2, obj.canvasSize(2)/2 + obj.boundingBoxPix/2];
             
             % Create 2 circle stimulus using Image
-            for k = 1:2
+            for k = 1:4
                 image = stage.builtin.stimuli.Image(obj.computeImage());
                 image.size = [obj.circleRadiusPix * 2, obj.circleRadiusPix * 2];
                 image.position = positions(k, :);
