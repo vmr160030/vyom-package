@@ -16,7 +16,6 @@ classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
     properties (Hidden)
         ampType
         circleRadiusPix
-        boundingBoxPix
         strokeWidthPix
         currentTemporalGap
         currentContrast
@@ -38,15 +37,7 @@ classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
             obj.numberOfAverages = obj.numberOfRepeats * obj.n_temporal_gaps * 2;
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.circleRadiusPix = obj.rig.getDevice('Stage').um2pix(obj.circleRadiusUm);
-            % Bounding box will be 3x the diameter of the circle
-            obj.boundingBoxPix = 3*2*obj.circleRadiusPix;
             obj.strokeWidthPix = obj.rig.getDevice('Stage').um2pix(obj.strokeWidthUm);
-            
-            disp(['Circle radius: ', num2str(obj.circleRadiusUm), ' um']);
-            disp(['Stroke width: ', num2str(obj.strokeWidthUm), ' um']);
-            disp(['Circle radius in pixels: ', num2str(obj.circleRadiusPix), ' pixels']);
-            disp(['Stroke width in pixels: ', num2str(obj.strokeWidthPix), ' pixels']);
-            disp(['Bounding box: ', num2str(obj.boundingBoxPix), ' pixels']);
             disp(['Number of averages: ', num2str(obj.numberOfAverages)]);
             obj.organizeParameters();
         end
@@ -92,26 +83,20 @@ classdef CircleTemporalGap < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
-            % Define center positions of 2 images
-            positions = [obj.canvasSize(1)/2 - obj.boundingBoxPix/2, obj.canvasSize(2)/2; ...
-                         obj.canvasSize(1)/2 + obj.boundingBoxPix/2, obj.canvasSize(2)/2];
+            % Create the circle stimulus using Image
+            image = stage.builtin.stimuli.Image(obj.computeImage());
+            image.size = [obj.circleRadiusPix * 2, obj.circleRadiusPix * 2];
+            image.position = [obj.canvasSize(1)/2, obj.canvasSize(2)/2];
             
-            % Create 2 circle stimulus using Image
-            for k = 1:2
-                image = stage.builtin.stimuli.Image(obj.computeImage());
-                image.size = [obj.circleRadiusPix * 2, obj.circleRadiusPix * 2];
-                image.position = positions(k, :);
-                
-                % Add the circle stimulus to the presentation
-                p.addStimulus(image);
-                
-                % Create controllers for the stimuli visibility
-                imageVisible = stage.builtin.controllers.PropertyController(image, 'visible', ...
-                    @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3...
-                    && ~(state.time >= (obj.preTime + obj.preGapTime) * 1e-3 && ...
-                        state.time < (obj.preTime + obj.preGapTime + obj.currentTemporalGap) * 1e-3));
-                p.addController(imageVisible);
-            end
+            % Add the circle stimulus to the presentation
+            p.addStimulus(image);
+            
+            % Create controllers for the stimuli visibility
+            imageVisible = stage.builtin.controllers.PropertyController(image, 'visible', ...
+                @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3...
+                && ~(state.time >= (obj.preTime + obj.preGapTime) * 1e-3 && ...
+                    state.time < (obj.preTime + obj.preGapTime + obj.currentTemporalGap) * 1e-3));
+            p.addController(imageVisible);
         end
         
         function prepareEpoch(obj, epoch)
