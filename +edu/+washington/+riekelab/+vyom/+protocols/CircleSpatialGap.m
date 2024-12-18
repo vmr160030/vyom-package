@@ -3,10 +3,10 @@ classdef CircleSpatialGap < manookinlab.protocols.ManookinLabStageProtocol
         amp                             % Output amplifier
         preTime = 1000                  % Pre-stimulus time (ms)
         stimTime = 106                   % Stimulus duration (ms)
-        tailTime = 1000                 % Post-stimulus time (ms)
+        tailTime = 500                 % Post-stimulus time (ms)
         circleRadiusUm = 150            % Circle radius (microns)
         strokeWidthUm = 50             % Stroke width (microns)
-        spatialGapsUm = [0, 200]        % Spatial gap sizes (microns)
+        spatialGapsUm = [0, 50, 200]        % Spatial gap sizes (microns)
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         numberOfRepeats = uint16(10)    % Number of repeats
         randomizeOrder = true           % Randomize the order of the gaps
@@ -39,8 +39,8 @@ classdef CircleSpatialGap < manookinlab.protocols.ManookinLabStageProtocol
             obj.numberOfAverages = obj.numberOfRepeats * obj.n_spatial_gaps * 2;
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             obj.circleRadiusPix = obj.rig.getDevice('Stage').um2pix(obj.circleRadiusUm);
-            % Bounding box will be 3x the diameter of the circle
-            obj.boundingBoxPix = 3*2*obj.circleRadiusPix;
+            % Bounding box will be 2x the diameter of the circle
+            obj.boundingBoxPix = 2*2*obj.circleRadiusPix;
             obj.strokeWidthPix = obj.rig.getDevice('Stage').um2pix(obj.strokeWidthUm);
 
             disp(['Circle radius: ', num2str(obj.circleRadiusUm), ' um']);
