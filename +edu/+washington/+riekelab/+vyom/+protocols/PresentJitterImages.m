@@ -3,15 +3,16 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp % Output amplifier
         preTime     = 250 % in ms
-        stimTime    = 250 % in ms
+        stimTime    = 200 % in ms
         tailTime    = 250 % in ms
         fileFolder = 'flashImages'; % Folder containing images
         %backgroundIntensity = 0.5; % 0 - 1 (corresponds to image intensities in folder)
         %randomize = true; % whether to randomize images shown
 
         % Jitter parameters
-        jitterSpacing = 50; % Spacing of jittered images (microns)
+        jitterSpacing = 20; % Spacing of jittered images (microns)
         numJitter = 5; % Number of displaced images to show in X and Y
+        onlyJitterX = false; % Only jitter in X direction
         % Additional parameters
         onlineAnalysis = 'none'
         numberOfReps = uint16(5) % Number of repetitions at each displaced location.
@@ -68,19 +69,35 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
                 obj.seqBgs(a) = mean(mean(temp_img))/255;
             end
 
-            obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter^2);
-            obj.numberOfAverages = uint16(obj.numberOfRepsPerImage * size(obj.imagePaths,1));
+            % Create sequence of X and Y jitters
+            if obj.onlyJitterX
+                jitter_combinations = obj.numJitter;
+                obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter);
+                obj.numberOfAverages = uint16(obj.numberOfRepsPerImage * size(obj.imagePaths,1));
+            else
+                jitter_combinations = obj.numJitter^2;
+                obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter^2);
+                obj.numberOfAverages = uint16(obj.numberOfRepsPerImage * size(obj.imagePaths,1));
+            end
             disp(['Number of epochs:',num2str(obj.numberOfAverages)]);
 
-            % Create sequence of X and Y jitters
-            obj.seqJitterX = zeros(uint16(obj.numJitter^2),1);
-            obj.seqJitterY = zeros(uint16(obj.numJitter^2),1);
-            count = 1;
-            for x = 1:obj.numJitter
-                for y = 1:obj.numJitter
+            obj.seqJitterX = zeros(uint16(jitter_combinations),1);
+            obj.seqJitterY = zeros(uint16(jitter_combinations),1);
+            if obj.onlyJitterX
+                obj.seqJitterY = zeros(uint16(jitter_combinations),1);
+                count = 1;
+                for x = 1:obj.numJitter
                     obj.seqJitterX(count) = (x-1)*obj.jitterSpacingPix;
-                    obj.seqJitterY(count) = (y-1)*obj.jitterSpacingPix;
                     count = count + 1;
+                end
+            else
+                count = 1;
+                for x = 1:obj.numJitter
+                    for y = 1:obj.numJitter
+                        obj.seqJitterX(count) = (x-1)*obj.jitterSpacingPix;
+                        obj.seqJitterY(count) = (y-1)*obj.jitterSpacingPix;
+                        count = count + 1;
+                    end
                 end
             end
 
