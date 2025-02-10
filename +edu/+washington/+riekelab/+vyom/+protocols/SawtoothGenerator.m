@@ -52,11 +52,11 @@ classdef SawtoothGenerator < symphonyui.core.StimulusGenerator
             data(prePts + 1:prePts + stimPts) = sawtooth;
             
             parameters = obj.dictionaryFromMap(obj.propertyMap);
-            %measurements = Measurement.FromArray(data, obj.units);
-            %rate = Measurement(obj.sampleRate, 'Hz');
-            %output = OutputData(measurements, rate);
+            measurements = Measurement.FromArray(data, obj.units);
+            rate = Measurement(obj.sampleRate, 'Hz');
+            output = OutputData(measurements, rate);
             
-            cobj = RenderedStimulus(class(obj), parameters);%, output);
+            cobj = RenderedStimulus(class(obj), parameters, output);
             s = symphonyui.core.Stimulus(cobj);
         end
         
