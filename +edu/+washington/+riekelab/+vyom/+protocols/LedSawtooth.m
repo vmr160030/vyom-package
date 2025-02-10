@@ -1,4 +1,4 @@
-classdef Sawtooth < manookinlab.protocols.ManookinLabStageProtocol
+classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp                             % Output amplifier
         preTime = 500                   % Stimulus leading duration (ms)
