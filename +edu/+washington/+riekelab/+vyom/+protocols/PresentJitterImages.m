@@ -77,7 +77,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             obj.backgroundImageMatrix = cell(1, obj.imagesPerEpoch);
             imageName = ''; % Concatenate the image names separated by a comma.
             for ii = 1 : obj.imagesPerEpoch
-                img_idx = obj.sequence(current_index + ii);
+                img_idx = obj.sequence(ii);
                 imgName = obj.imagePaths{img_idx, 1};
                 
                 % Load the image.
