@@ -11,7 +11,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         
         %background is set for each image to image mean
         %backgroundIntensity = 0.5; % 0 - 1 (corresponds to image intensities in folder)
-        %randomize = true; % whether to randomize images shown
+        randomize = true; % whether to randomize images shown
 
         % Jitter parameters
         jitterSpacing = 20; % Spacing of jittered images (microns)
@@ -72,11 +72,18 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             % Assert number of images equal to imagesPerEpoch
             assert(obj.numberOfImages == obj.imagesPerEpoch, 'Number of images in folder does not match imagesPerEpoch');
 
+            % Order of images
+            if obj.randomize
+                obj.sequence = randperm(obj.numberOfImages);
+            else
+                obj.sequence = 1:obj.numberOfImages;
+            end
+            
             % Load the images.
             obj.imageMatrix = cell(1, obj.imagesPerEpoch);
             obj.backgroundImageMatrix = cell(1, obj.imagesPerEpoch);
             imageName = ''; % Concatenate the image names separated by a comma.
-            for ii = 1 : obj.imagesPerEpoch
+            for ii = 1 : obj.numberOfImages
                 img_idx = obj.sequence(ii);
                 imgName = obj.imagePaths{img_idx, 1};
                 
@@ -140,8 +147,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             %     end
             %     obj.sequence = obj.sequence(1:obj.numberOfAverages);
             % else
-            obj.sequence =  (1:obj.numberOfImages)' * ones(1, obj.numberOfRepsPerImage);
-            obj.sequence = obj.sequence(:);
+            % obj.sequence =  (1:obj.numberOfImages)' * ones(1, obj.numberOfRepsPerImage);
+            % obj.sequence = obj.sequence(:);
             % end
 
         end
