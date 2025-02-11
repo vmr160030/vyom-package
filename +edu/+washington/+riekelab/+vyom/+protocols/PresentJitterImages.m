@@ -82,7 +82,6 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             % Load the images.
             obj.imageMatrix = cell(1, obj.imagesPerEpoch);
             obj.backgroundImageMatrix = cell(1, obj.imagesPerEpoch);
-            imageName = ''; % Concatenate the image names separated by a comma.
             for ii = 1 : obj.numberOfImages
                 img_idx = obj.sequence(ii);
                 imgName = obj.imagePaths{img_idx, 1};
@@ -96,8 +95,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
                 end
 
                 % Create the background image.
-                backgroundIntensity = mean(mean(myImage))/255;
-                obj.backgroundImageMatrix{ii} = ones(size(myImage))*backgroundIntensity;
+                img_bg = mean(mean(myImage))/255;
+                obj.backgroundImageMatrix{ii} = ones(size(myImage))*img_bg;
                 obj.backgroundImageMatrix{ii} = uint8(obj.backgroundImageMatrix{ii}*255);
             end
 
@@ -216,7 +215,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             obj.jitterY = obj.seqJitterY(mod(obj.numEpochsCompleted,length(obj.seqJitterY)) + 1);
             
             % Set background intensity to first image mean
-            obj.backgroundIntensity = obj.backgroundImageMatrix{1}(1,1)/255;
+            obj.backgroundIntensity = double(obj.backgroundImageMatrix{1}(1,1))/255;
 
             % Add parameters to epoch
             epoch.addParameter('imageName', obj.image_name);
