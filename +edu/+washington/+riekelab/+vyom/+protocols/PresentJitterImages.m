@@ -3,9 +3,13 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
     properties
         amp % Output amplifier
         preTime     = 250 % in ms
-        stimTime    = 200 % in ms
+        flashTime   = 250 % Time to flash each image in ms
+        gapTime = 250 % Gap between images in ms
         tailTime    = 250 % in ms
         fileFolder = 'flashImages'; % Folder containing images
+        imagesPerEpoch = 10; % Number of images to flash on each epoch
+        
+        %background is set for each image to image mean
         %backgroundIntensity = 0.5; % 0 - 1 (corresponds to image intensities in folder)
         %randomize = true; % whether to randomize images shown
 
@@ -13,16 +17,19 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         jitterSpacing = 20; % Spacing of jittered images (microns)
         numJitter = 5; % Number of displaced images to show in X and Y
         onlyJitterX = false; % Only jitter in X direction
-        % Additional parameters
+
         onlineAnalysis = 'none'
         numberOfReps = uint16(5) % Number of repetitions at each displaced location.
+    end
+
+    properties (Dependent)
+        stimTime
     end
     
     properties (Hidden)
         ampType
         numberOfImages
-        numberOfRepsPerImage % This will be numJitter^2 * numberOfReps
-        numberOfAverages % number of epochs. numberOfReps * numJitter^2 * numberOfImages
+        numberOfAverages % number of epochs. numberOfReps * numJitter^2
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'exc', 'inh'}) 
         sequence
         imagePaths
@@ -37,9 +44,8 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
         seqJitterY
         jitterX
         jitterY
-        seqBgs
         backgroundIntensity
-        
+        backgroundImageMatrix
     end
 
     methods
@@ -60,27 +66,45 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
                     obj.imagePaths{a,1} = D(a).name;
                 end
             end
+
             obj.imagePaths = obj.imagePaths(~cellfun(@isempty, obj.imagePaths(:,1)), :);
             obj.numberOfImages = size(obj.imagePaths,1);
-            obj.seqBgs = zeros(obj.numberOfImages,1);
-            for a = 1:obj.numberOfImages
-                img_name = obj.imagePaths{a,1};
-                temp_img=imread(fullfile(obj.directory,img_name));
-                obj.seqBgs(a) = mean(mean(temp_img))/255;
+            % Assert number of images equal to imagesPerEpoch
+            assert(obj.numberOfImages == obj.imagesPerEpoch, 'Number of images in folder does not match imagesPerEpoch');
+
+            % Load the images.
+            obj.imageMatrix = cell(1, obj.imagesPerEpoch);
+            obj.backgroundImageMatrix = cell(1, obj.imagesPerEpoch);
+            imageName = ''; % Concatenate the image names separated by a comma.
+            for ii = 1 : obj.imagesPerEpoch
+                img_idx = obj.sequence(current_index + ii);
+                imgName = obj.imagePaths{img_idx, 1};
+                
+                % Load the image.
+                myImage = imread(fullfile(obj.directory, imgName));
+                obj.imageMatrix{ii} = uint8(myImage);
+                obj.image_name = [obj.image_name, imgName];
+                if ii < obj.imagesPerEpoch
+                    obj.image_name = [obj.image_name,'_'];
+                end
+
+                % Create the background image.
+                backgroundIntensity = mean(mean(myImage))/255;
+                obj.backgroundImageMatrix{ii} = ones(size(myImage))*backgroundIntensity;
+                obj.backgroundImageMatrix{ii} = uint8(obj.backgroundImageMatrix{ii}*255);
             end
 
-            % Create sequence of X and Y jitters
+            
+            % Compute number of averages
             if obj.onlyJitterX
                 jitter_combinations = obj.numJitter;
-                obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter);
-                obj.numberOfAverages = uint16(obj.numberOfRepsPerImage * size(obj.imagePaths,1));
             else
                 jitter_combinations = obj.numJitter^2;
-                obj.numberOfRepsPerImage = uint16(obj.numberOfReps * obj.numJitter^2);
-                obj.numberOfAverages = uint16(obj.numberOfRepsPerImage * size(obj.imagePaths,1));
             end
+            obj.numberOfAverages = uint16(obj.numberOfReps * jitter_combinations);
             disp(['Number of epochs:',num2str(obj.numberOfAverages)]);
-
+            
+            % Create sequence of X and Y jitters
             obj.seqJitterX = zeros(uint16(jitter_combinations),1);
             obj.seqJitterY = zeros(uint16(jitter_combinations),1);
             if obj.onlyJitterX
@@ -139,13 +163,10 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             
             % Load image
-            specificImage = imread(fullfile(obj.directory, obj.image_name));
-            disp(obj.backgroundIntensity);
-            disp(mean(mean(specificImage))/255);
             p.setBackgroundColor(obj.backgroundIntensity)   % Set background intensity
             
             % Prep to display image
-            scene = stage.builtin.stimuli.Image(uint8(specificImage));
+            scene = stage.builtin.stimuli.Image(obj.imageMatrix{1});
             scene.size = [canvasSize(1),canvasSize(2)];
             scene.position = canvasSize/2  + [obj.jitterX, obj.jitterY];
             
@@ -158,19 +179,37 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             sceneVisible = stage.builtin.controllers.PropertyController(scene, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
             p.addController(sceneVisible);
+            
+            % Control which image is visible.
+            imgValue = stage.builtin.controllers.PropertyController(scene, ...
+                'imageMatrix', @(state)setImage(obj, state.time - obj.preTime*1e-3));
+            % Add the controller.
+            p.addController(imgValue);
+
+            function s = setImage(obj, time)
+                img_index = floor( time / ((obj.flashTime+obj.gapTime)*1e-3) ) + 1;
+                if img_index < 1 || img_index > obj.imagesPerEpoch
+                    s = obj.backgroundImageMatrix{1};
+                elseif (time >= ((obj.flashTime+obj.gapTime)*1e-3)*(img_index-1)) && (time <= (((obj.flashTime+obj.gapTime)*1e-3)*(img_index-1)+obj.flashTime*1e-3))
+                    s = obj.imageMatrix{img_index};
+                else
+                    s = obj.backgroundImageMatrix{img_index};
+                end
+            end
+
             disp('created presentation');
         end
         
         function prepareEpoch(obj, epoch)
             disp('preparing epoch')
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-            
-            img_idx = obj.sequence(mod(obj.numEpochsCompleted,length(obj.sequence)) + 1);
-            obj.image_name = obj.imagePaths{img_idx,1};
+
+            % Get current jitter values
             obj.jitterX = obj.seqJitterX(mod(obj.numEpochsCompleted,length(obj.seqJitterX)) + 1);
             obj.jitterY = obj.seqJitterY(mod(obj.numEpochsCompleted,length(obj.seqJitterY)) + 1);
-            obj.backgroundIntensity = obj.seqBgs(img_idx);
-
+            
+            % Set background intensity to first image mean
+            obj.backgroundIntensity = obj.backgroundImageMatrix{1}(1,1)/255;
 
             % Add parameters to epoch
             epoch.addParameter('imageName', obj.image_name);
@@ -180,14 +219,21 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('jitterSpacing',obj.jitterSpacing);
             epoch.addParameter('jitterSpacingPix', obj.jitterSpacingPix);
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
-            disp(obj.image_name)
-            disp(obj.jitterX)
-            disp(obj.jitterY)
-
+            
+            % Display parameters
+            disp(['Epoch ', num2str(obj.numEpochsCompleted), ' of ', num2str(obj.numberOfAverages)]);
+            disp(['Jitter X: ', num2str(obj.jitterX)]);
+            disp(['Jitter Y: ', num2str(obj.jitterY)]);
+            disp(['Image Name: ', obj.image_name]);
+            disp(['Background Intensity: ', num2str(obj.backgroundIntensity)]);
             
 %             if obj.randomize
 %                 epoch.addParameter('seed',obj.seed);
 %             end
+        end
+
+        function stimTime = get.stimTime(obj)
+            stimTime = obj.imagesPerEpoch * (obj.flashTime + obj.gapTime);
         end
 
         function tf = shouldContinuePreparingEpochs(obj)
