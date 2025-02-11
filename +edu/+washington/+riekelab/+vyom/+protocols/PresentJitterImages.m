@@ -211,7 +211,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
             
             % Display parameters
-            disp(['Epoch ', num2str(obj.numEpochsCompleted), ' of ', num2str(obj.numberOfAverages)]);
+            disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
             disp(['Jitter X: ', num2str(obj.jitterX)]);
             disp(['Jitter Y: ', num2str(obj.jitterY)]);
             disp(['Image Name: ', obj.image_name]);
