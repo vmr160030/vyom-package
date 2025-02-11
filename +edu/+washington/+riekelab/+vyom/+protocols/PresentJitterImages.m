@@ -131,30 +131,16 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
                 end
             end
 
-            % Repeat seqJitter for numberOfReps and numberOfImages to match numberOfAverages size
-            obj.seqJitterX = repelem(obj.seqJitterX,obj.numberOfImages);
+            % Repeat seqJitter for numberOfReps to match numberOfAverages size
             obj.seqJitterX = repmat(obj.seqJitterX,obj.numberOfReps,1);
-            obj.seqJitterY = repelem(obj.seqJitterY,obj.numberOfImages);
             obj.seqJitterY = repmat(obj.seqJitterY,obj.numberOfReps,1);
-
-            % Create sequence of images to run through. This doesn't work LOL.
-            % if obj.randomize
-            %     obj.sequence = zeros(1,obj.numberOfAverages);
-            %     for ii = 1 : obj.numberOfRepsPerImage
-            %         seq = randperm(size(obj.imagePaths,1));
-            %         obj.sequence((ii-1)*length(seq)+(1:length(seq))) = seq;
-            %     end
-            %     obj.sequence = obj.sequence(1:obj.numberOfAverages);
-            % else
-            % obj.sequence =  (1:obj.numberOfImages)' * ones(1, obj.numberOfRepsPerImage);
-            % obj.sequence = obj.sequence(:);
-            % end
-
         end
 
         function prepareRun(obj)
             % Needs to be before call to parent to compute numberOfAverages
             obj.jitterSpacingPix = obj.rig.getDevice('Stage').um2pix(obj.jitterSpacing);
+            disp(['Jitter spacing microns: ',num2str(obj.jitterSpacing)]);
+            disp(['Jitter spacing in pixels: ',num2str(obj.jitterSpacingPix)]);
             obj.organizeSequence();
 
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
@@ -167,8 +153,6 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
             % Stage presets
             canvasSize = obj.rig.getDevice('Stage').getCanvasSize();     
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
-            
-            % Load image
             p.setBackgroundColor(obj.backgroundIntensity)   % Set background intensity
             
             % Prep to display image
