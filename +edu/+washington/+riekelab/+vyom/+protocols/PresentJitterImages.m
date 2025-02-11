@@ -91,7 +91,7 @@ classdef PresentJitterImages < manookinlab.protocols.ManookinLabStageProtocol
                 obj.imageMatrix{ii} = uint8(myImage);
                 obj.image_name = [obj.image_name, imgName];
                 if ii < obj.imagesPerEpoch
-                    obj.image_name = [obj.image_name,'_'];
+                    obj.image_name = [obj.image_name,','];
                 end
 
                 % Create the background image.
