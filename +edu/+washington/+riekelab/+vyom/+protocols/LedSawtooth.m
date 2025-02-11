@@ -101,7 +101,7 @@ classdef LedSawtooth < edu.washington.riekelab.protocols.RiekeLabProtocol
         end
 
         function stim = createLedStimulus(obj)
-            gen = SawtoothGenerator();
+            gen = edu.washington.riekelab.vyom.protocols.SawtoothGenerator();
             gen.preTime = obj.preTime;
             gen.stimTime = obj.stimTime;
             gen.tailTime = obj.tailTime;
