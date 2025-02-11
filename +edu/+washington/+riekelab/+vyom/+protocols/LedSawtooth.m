@@ -1,5 +1,6 @@
 classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
     properties
+        led                             % Output LED
         amp                             % Output amplifier
         preTime = 500                   % Stimulus leading duration (ms)
         stimTime = 6000                   % Stimulus duration (ms)
@@ -12,6 +13,7 @@ classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
     end
     
     properties (Hidden)
+        ledType
         ampType
         stixelSizePix
         intensity
@@ -44,6 +46,8 @@ classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
 
             % Call the base method.
             prepareRun@edu.washington.riekelab.protocols.RiekeLabProtocol(obj);
+            device = obj.rig.getDevice(obj.led);
+            device.background = symphonyui.core.Measurement(obj.backgroundIntensity, device.background.displayUnits);
 
             obj.organizeParameters();
 
@@ -118,12 +122,13 @@ classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@edu.washington.riekelab.protocols.RiekeLabProtocol(obj, epoch);
-            obj.currentContrast = obj.seqContrasts(obj.numEpochsCompleted+1);
-            obj.currentFrequency = obj.seqTemporalFrequencies(obj.numEpochsCompleted+1);
-            obj.currentRapidOnOff = obj.seqRapidOnOff(obj.numEpochsCompleted+1);
-            obj.currentUniqueStim = obj.seqUniqueStim(obj.numEpochsCompleted+1);
+            obj.currentContrast = obj.seqContrasts(obj.numEpochsPrepared);
+            obj.currentFrequency = obj.seqTemporalFrequencies(obj.numEpochsPrepared);
+            obj.currentRapidOnOff = obj.seqRapidOnOff(obj.numEpochsPrepared);
+            obj.currentUniqueStim = obj.seqUniqueStim(obj.numEpochsPrepared);
             
             epoch.addStimulus(obj.rig.getDevice(obj.led), obj.createLedStimulus());
+            epoch.addResponse(obj.rig.getDevice(obj.amp));
 
             epoch.addParameter('currentContrast', obj.currentContrast);
             epoch.addParameter('currentFrequency', obj.currentFrequency);
@@ -132,7 +137,7 @@ classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('currentUniqueStim', obj.currentUniqueStim);
 
             % Display current params
-            disp(['Epoch ', num2str(obj.numEpochsCompleted+1), ' of ', num2str(obj.numberOfAverages)]);
+            disp(['Epoch ', num2str(obj.numEpochsPrepared), ' of ', num2str(obj.numberOfAverages)]);
             disp(['Stimulus contrast: ', num2str(obj.currentContrast)]);
             disp(['Temporal frequency: ', num2str(obj.currentFrequency)]);
             disp(['Rapid On/Off: ', num2str(obj.currentRapidOnOff)]);
