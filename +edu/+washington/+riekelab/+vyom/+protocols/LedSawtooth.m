@@ -1,4 +1,4 @@
-classdef LedSawtooth < manookinlab.protocols.ManookinLabStageProtocol
+classdef LedSawtooth < edu.washington.riekelab.protocols.RiekeLabProtocol
     properties
         led                             % Output LED
         amp                             % Output amplifier
