@@ -19,11 +19,10 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         temporalClass = 'drifting'      % Temporal type (drifting or reversing)      
         chromaticClass = 'achromatic'   % Chromatic type
         numberOfRepeats = uint16(2)   % Number of repeats.
-        numberOfAverages = uint16(1)    % Number of epochs
     end
     
     properties (Hidden)
-        % numberOfAverages % Number of epochs
+        numberOfAverages % Number of epochs
         ampType
         apertureClassType = symphonyui.core.PropertyType('char', 'row', {'spot', 'annulus'})
         spatialClassType = symphonyui.core.PropertyType('char', 'row', {'sinewave', 'squarewave'})
@@ -44,9 +43,13 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
     end
     
     % Analysis properties
-    % properties (Hidden)
-    %     coneContrasts 
-    % end
+    properties (Hidden)
+        coneContrasts 
+    end
+    
+    properties (Hidden, Transient)
+        analysisFigure
+    end
     
     methods
         
@@ -58,11 +61,11 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         
         function prepareRun(obj)
             % Generate the sequences of parameters.
-            % [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
-            % obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
-            % obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
-            % obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
-            % obj.numberOfAverages = length(obj.seqBW);
+            [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
+            obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
+            obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
+            obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
+            obj.numberOfAverages = length(obj.seqBW);
             disp(['Number of epochs: ', num2str(obj.numberOfAverages)]);
 
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
@@ -86,27 +89,9 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             end
             
             % Calculate the cone contrasts.
-            % obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
-            %     obj.colorWeights, 'michaelson');
+            obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
+                obj.colorWeights, 'michaelson');
 
-            % debugging
-            idx =1;
-            obj.seqBW = obj.barWidths;
-            obj.seqTF = obj.temporalFrequencies;
-            obj.seqC = obj.contrasts;
-            obj.barWidth = obj.seqBW(idx);
-            obj.temporalFrequency = obj.seqTF(idx);
-            obj.contrast = obj.seqC(idx);
-
-            % Get the bar width in pixels
-            obj.barWidthPix = obj.rig.getDevice('Stage').um2pix(obj.barWidth);
-
-            % Calculate the spatial frequency.
-            obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
-
-            % Set up the raw image.
-            obj.setRawImage();
-            
             disp(['Prepared run with ', num2str(obj.numberOfAverages), ' epochs']);
         end
 
@@ -266,19 +251,19 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
 
             % Get the current combination of parameters.
-            % idx = mod(obj.numEpochsCompleted, obj.numberOfAverages) + 1;
-            % obj.barWidth = obj.seqBW(idx);
-            % obj.temporalFrequency = obj.seqTF(idx);
-            % obj.contrast = obj.seqC(idx);
+            idx = mod(obj.numEpochsCompleted, obj.numberOfAverages) + 1;
+            obj.barWidth = obj.seqBW(idx);
+            obj.temporalFrequency = obj.seqTF(idx);
+            obj.contrast = obj.seqC(idx);
 
-            % % Get the bar width in pixels
-            % obj.barWidthPix = obj.rig.getDevice('Stage').um2pix(obj.barWidth);
+            % Get the bar width in pixels
+            obj.barWidthPix = obj.rig.getDevice('Stage').um2pix(obj.barWidth);
 
-            % % Calculate the spatial frequency.
-            % obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
+            % Calculate the spatial frequency.
+            obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
 
-            % % Set up the raw image.
-            % obj.setRawImage();
+            % Set up the raw image.
+            obj.setRawImage();
 
             % Add the parameters to the epoch.
             epoch.addParameter('barWidth', obj.barWidth);
@@ -301,10 +286,10 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             
             
             % Save out the cone/rod contrasts.
-            % epoch.addParameter('lContrast', obj.coneContrasts(1));
-            % epoch.addParameter('mContrast', obj.coneContrasts(2));
-            % epoch.addParameter('sContrast', obj.coneContrasts(3));
-            % epoch.addParameter('rodContrast', obj.coneContrasts(4));
+            epoch.addParameter('lContrast', obj.coneContrasts(1));
+            epoch.addParameter('mContrast', obj.coneContrasts(2));
+            epoch.addParameter('sContrast', obj.coneContrasts(3));
+            epoch.addParameter('rodContrast', obj.coneContrasts(4));
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
