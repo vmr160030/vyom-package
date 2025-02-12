@@ -44,9 +44,9 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
     end
     
     % Analysis properties
-    properties (Hidden)
-        coneContrasts 
-    end
+    % properties (Hidden)
+    %     coneContrasts 
+    % end
     
     methods
         
@@ -86,8 +86,8 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             end
             
             % Calculate the cone contrasts.
-            obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
-                obj.colorWeights, 'michaelson');
+            % obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
+            %     obj.colorWeights, 'michaelson');
 
             % debugging
             idx =1;
@@ -301,10 +301,10 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             
             
             % Save out the cone/rod contrasts.
-            epoch.addParameter('lContrast', obj.coneContrasts(1));
-            epoch.addParameter('mContrast', obj.coneContrasts(2));
-            epoch.addParameter('sContrast', obj.coneContrasts(3));
-            epoch.addParameter('rodContrast', obj.coneContrasts(4));
+            % epoch.addParameter('lContrast', obj.coneContrasts(1));
+            % epoch.addParameter('mContrast', obj.coneContrasts(2));
+            % epoch.addParameter('sContrast', obj.coneContrasts(3));
+            % epoch.addParameter('rodContrast', obj.coneContrasts(4));
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
