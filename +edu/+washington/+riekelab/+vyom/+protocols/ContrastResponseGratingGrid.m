@@ -94,9 +94,6 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
                 obj.colorWeights, 'michaelson');
             
-            % Set up the raw image.
-            obj.setRawImage();
-            
             obj.xaxis = unique(obj.contrasts);
             obj.F1Amp = zeros(size(obj.xaxis));
             obj.repsPerX = zeros(size(obj.xaxis));
@@ -111,8 +108,8 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
                     bw = obj.barWidths(bwIdx);
                     tf = obj.temporalFrequencies(tfIdx);
                     numContrasts = min(obj.barWidthContrasts(bwIdx), obj.temporalFrequencyContrasts(tfIdx));
-                    contrasts = obj.contrasts(end-numContrasts+1:end);
-                    for c = contrasts
+                    selected_c = obj.contrasts(end-numContrasts+1:end);
+                    for c = selected_c
                         seqBW = [seqBW; bw];
                         seqTF = [seqTF; tf];
                         seqC = [seqC; c];
@@ -269,6 +266,9 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             % Calculate the spatial frequency.
             obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
 
+            % Set up the raw image.
+            obj.setRawImage();
+
             % Add the parameters to the epoch.
             epoch.addParameter('barWidth', obj.barWidth);
             epoch.addParameter('barWidthPix', obj.barWidthPix);
@@ -286,6 +286,8 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             % Add the spatial frequency to the epoch.
             epoch.addParameter('contrast', obj.contrast);
             epoch.addParameter('backgroundMeans',obj.backgroundMeans);
+
+            
             
             % Save out the cone/rod contrasts.
             epoch.addParameter('lContrast', obj.coneContrasts(1));
