@@ -262,19 +262,19 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
 
             % Get the current combination of parameters.
-            idx = mod(obj.numEpochsCompleted, obj.numberOfAverages) + 1;
-            obj.barWidth = obj.seqBW(idx);
-            obj.temporalFrequency = obj.seqTF(idx);
-            obj.contrast = obj.seqC(idx);
+            % idx = mod(obj.numEpochsCompleted, obj.numberOfAverages) + 1;
+            % obj.barWidth = obj.seqBW(idx);
+            % obj.temporalFrequency = obj.seqTF(idx);
+            % obj.contrast = obj.seqC(idx);
 
-            % Get the bar width in pixels
-            obj.barWidthPix = obj.rig.getDevice('Stage').um2pix(obj.barWidth);
+            % % Get the bar width in pixels
+            % obj.barWidthPix = obj.rig.getDevice('Stage').um2pix(obj.barWidth);
 
-            % Calculate the spatial frequency.
-            obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
+            % % Calculate the spatial frequency.
+            % obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
 
-            % Set up the raw image.
-            obj.setRawImage();
+            % % Set up the raw image.
+            % obj.setRawImage();
 
             % Add the parameters to the epoch.
             epoch.addParameter('barWidth', obj.barWidth);
