@@ -60,6 +60,11 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         end
         
         function prepareRun(obj)
+            % Assert barWidths and barWidthContrasts are the same length
+            assert(length(obj.barWidths) == length(obj.barWidthContrasts), 'barWidths and barWidthContrasts must be the same length');
+            % Assert temporalFrequencies and temporalFrequencyContrasts are the same length
+            assert(length(obj.temporalFrequencies) == length(obj.temporalFrequencyContrasts), 'temporalFrequencies and temporalFrequencyContrasts must be the same length');
+            
             % Generate the sequences of parameters.
             [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
             obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
