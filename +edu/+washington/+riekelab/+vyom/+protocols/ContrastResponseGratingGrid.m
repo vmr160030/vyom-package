@@ -88,6 +88,21 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
                 obj.colorWeights, 'michaelson');
 
+            % debugging
+            idx =1;
+            obj.barWidth = obj.seqBW(idx);
+            obj.temporalFrequency = obj.seqTF(idx);
+            obj.contrast = obj.seqC(idx);
+
+            % Get the bar width in pixels
+            obj.barWidthPix = obj.rig.getDevice('Stage').um2pix(obj.barWidth);
+
+            % Calculate the spatial frequency.
+            obj.spatialFreq = min(obj.canvasSize)/(2*obj.barWidthPix);
+
+            % Set up the raw image.
+            obj.setRawImage();
+            
             disp(['Prepared run with ', num2str(obj.numberOfAverages), ' epochs']);
         end
 
