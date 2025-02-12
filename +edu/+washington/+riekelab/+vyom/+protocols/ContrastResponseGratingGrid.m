@@ -63,6 +63,13 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         end
         
         function prepareRun(obj)
+            % Generate the sequences of parameters.
+            [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
+            obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
+            obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
+            obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
+            obj.numberOfAverages = length(obj.seqBW);
+
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
@@ -93,13 +100,6 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             obj.xaxis = unique(obj.contrasts);
             obj.F1Amp = zeros(size(obj.xaxis));
             obj.repsPerX = zeros(size(obj.xaxis));
-
-            % Generate the sequences of parameters.
-            [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
-            obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
-            obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
-            obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
-            obj.numberOfAverages = length(obj.seqBW);
         end
 
         function [seqBW, seqTF, seqC] = generateCombinations(obj)
