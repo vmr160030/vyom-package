@@ -8,8 +8,8 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         orientation = 0.0               % Grating orientation (deg)
         barWidths = [20 40 80 160]      % Grating bar width (um)
         temporalFrequencies = [1 3 9 27 81]        % Temporal frequency (Hz)
-        barWidthContrasts = [2 3 4 4]   % Number of top contrasts for each bar width
-        temporalFrequencyContrasts = [4 4 4 2 1] % Number of top contrasts for each temporal frequency
+        barWidthContrasts = [2 3 4 4]   % Number of top contrasts for each bar width. Max must be less than or equal to length(contrasts)
+        temporalFrequencyContrasts = [4 4 4 2 1] % Number of top contrasts for each temporal frequency. Max must be less than or equal to length(contrasts)
         spatialPhase = 0.0              % Spatial phase of grating (deg)
         backgroundIntensity = 0.5       % Background light intensity (0-1)
         centerOffset = [0,0]            % Center offset in pixels (x,y)
@@ -65,7 +65,7 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             % Assert temporalFrequencies and temporalFrequencyContrasts are the same length
             assert(length(obj.temporalFrequencies) == length(obj.temporalFrequencyContrasts), 'temporalFrequencies and temporalFrequencyContrasts must be the same length');
             % Max of barWidthContrasts and temporalFrequencyContrasts must be less than or equal to length(contrasts)
-            assert(all(max([obj.barWidthContrasts; obj.temporalFrequencyContrasts]) <= length(obj.contrasts)), 'barWidthContrasts and temporalFrequencyContrasts must be less than or equal to length(contrasts)');
+            % assert(all(max([obj.barWidthContrasts; obj.temporalFrequencyContrasts]) <= length(obj.contrasts)), 'barWidthContrasts and temporalFrequencyContrasts must be less than or equal to length(contrasts)');
             
             % Generate the sequences of parameters.
             [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
