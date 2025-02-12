@@ -44,14 +44,7 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
     
     % Analysis properties
     properties (Hidden)
-        xaxis
-        F1Amp
-        repsPerX
         coneContrasts 
-    end
-    
-    properties (Hidden, Transient)
-        analysisFigure
     end
     
     methods
@@ -69,6 +62,7 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
             obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
             obj.numberOfAverages = length(obj.seqBW);
+            disp(['Number of epochs: ', num2str(obj.numberOfAverages)]);
 
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
             
@@ -93,10 +87,8 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
             % Calculate the cone contrasts.
             obj.coneContrasts = coneContrast((obj.backgroundMeans(:)*ones(1,size(obj.quantalCatch,2))).*obj.quantalCatch, ...
                 obj.colorWeights, 'michaelson');
-            
-            obj.xaxis = unique(obj.contrasts);
-            obj.F1Amp = zeros(size(obj.xaxis));
-            obj.repsPerX = zeros(size(obj.xaxis));
+
+            disp(['Prepared run with ', num2str(obj.numberOfAverages), ' epochs']);
         end
 
         function [seqBW, seqTF, seqC] = generateCombinations(obj)
