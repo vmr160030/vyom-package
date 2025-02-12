@@ -19,10 +19,11 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         temporalClass = 'drifting'      % Temporal type (drifting or reversing)      
         chromaticClass = 'achromatic'   % Chromatic type
         numberOfRepeats = uint16(2)   % Number of repeats.
+        numberOfAverages = uint16(1)    % Number of epochs
     end
     
     properties (Hidden)
-        numberOfAverages % Number of epochs
+        % numberOfAverages % Number of epochs
         ampType
         apertureClassType = symphonyui.core.PropertyType('char', 'row', {'spot', 'annulus'})
         spatialClassType = symphonyui.core.PropertyType('char', 'row', {'sinewave', 'squarewave'})
@@ -57,11 +58,11 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
         
         function prepareRun(obj)
             % Generate the sequences of parameters.
-            [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
-            obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
-            obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
-            obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
-            obj.numberOfAverages = length(obj.seqBW);
+            % [obj.seqBW, obj.seqTF, obj.seqC] = obj.generateCombinations();
+            % obj.seqBW = repmat(obj.seqBW, obj.numberOfRepeats, 1);
+            % obj.seqTF = repmat(obj.seqTF, obj.numberOfRepeats, 1);
+            % obj.seqC = repmat(obj.seqC, obj.numberOfRepeats, 1);
+            % obj.numberOfAverages = length(obj.seqBW);
             disp(['Number of epochs: ', num2str(obj.numberOfAverages)]);
 
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
@@ -90,6 +91,9 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
 
             % debugging
             idx =1;
+            obj.seqBW = obj.barWidths;
+            obj.seqTF = obj.temporalFrequencies;
+            obj.seqC = obj.contrasts;
             obj.barWidth = obj.seqBW(idx);
             obj.temporalFrequency = obj.seqTF(idx);
             obj.contrast = obj.seqC(idx);
