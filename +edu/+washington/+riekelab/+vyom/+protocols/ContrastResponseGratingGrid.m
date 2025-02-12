@@ -278,9 +278,7 @@ classdef ContrastResponseGratingGrid < manookinlab.protocols.ManookinLabStagePro
                 ': bar width = ', num2str(obj.barWidth), ...
                 ', temporal frequency = ', num2str(obj.temporalFrequency), ...
                 ', contrast = ', num2str(obj.contrast)]);
-
-                
-            epoch.addParameter('contrast', obj.contrast);
+    
             epoch.addParameter('backgroundMeans',obj.backgroundMeans);
 
             
