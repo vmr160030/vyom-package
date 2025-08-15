@@ -146,7 +146,7 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
                 end
             end
             
-            obj.pairIndex = obj.sequence(obj.numEpochsCompleted);
+            obj.pairIndex = obj.sequence(obj.numEpochsCompleted+1);
             
             % Get s1 and s2 paths by {obj.image_dir}/{obj.prefix}_{idx}_s1.png
             s1_path = fullfile(obj.image_dir, sprintf('%s_%d_s1.png', obj.prefix, obj.pairIndex));
