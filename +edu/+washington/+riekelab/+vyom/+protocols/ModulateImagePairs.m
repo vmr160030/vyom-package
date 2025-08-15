@@ -43,6 +43,7 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
         flashFrames
         gapFrames
         pairIndex
+        image_dir
     end
 
     methods
