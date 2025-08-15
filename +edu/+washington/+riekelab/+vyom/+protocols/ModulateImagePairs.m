@@ -75,9 +75,6 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             
             % Set the image directory
             obj.image_dir = fullfile(parent_dir, obj.fileFolder);
-            
-            % Set number of averages = n_pairs * n_repeats
-            obj.numberOfAverages = obj.n_pairs * obj.n_repeats;
 
             % Sequence will be 1:n_pairs, repeated n_repeats times
             obj.sequence = 1:obj.n_pairs;
@@ -179,6 +176,11 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
 
         function n_images = get.n_images(obj)
             n_images = obj.n_pairs * 2; % Each pair has two images
+        end
+
+        function numberOfAverages = get.numberOfAverages(obj)
+            % Set number of averages = n_pairs * n_repeats
+            numberOfAverages = obj.n_pairs * obj.n_repeats;
         end
         
         function a = get.amp2(obj)
