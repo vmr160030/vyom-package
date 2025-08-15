@@ -75,7 +75,6 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             
             % Set the image directory
             obj.image_dir = fullfile(parent_dir, obj.fileFolder);
-            obj.n_images = obj.n_pairs * 2;
             
             % Set number of averages = n_pairs * n_repeats
             obj.numberOfAverages = obj.n_pairs * obj.n_repeats;
@@ -131,6 +130,7 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
                     s = obj.s2;
                 end
             end
+        end
 
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
@@ -176,6 +176,10 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
         function stimTime = get.stimTime(obj)
             stimTime = obj.repeatsPerEpoch * (obj.flashTime + obj.gapTime);
         end
+
+        function n_images = get.n_images(obj)
+            n_images = obj.n_pairs * 2; % Each pair has two images
+        end
         
         function a = get.amp2(obj)
             amps = obj.rig.getDeviceNames('Amp');
@@ -195,4 +199,5 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             tf = obj.numEpochsCompleted < obj.numberOfAverages;
         end
     end
+end
 end
