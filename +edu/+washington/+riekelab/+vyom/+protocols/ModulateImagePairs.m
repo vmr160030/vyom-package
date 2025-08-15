@@ -200,4 +200,3 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
         end
     end
 end
-end
