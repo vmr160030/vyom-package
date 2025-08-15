@@ -161,7 +161,7 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             obj.s2 = uint8(s2);
 
             % Create the background image from mean of s1 and s2
-            obj.backgroundIntensity = mean([s1(:); s2(:)]);
+            obj.backgroundIntensity = mean([s1(:); s2(:)])/255;
             obj.backgroundImage = ones(size(s1))*obj.backgroundIntensity;
             obj.backgroundImage = uint8(obj.backgroundImage*255);
             
