@@ -44,6 +44,7 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
         gapFrames
         pairIndex
         image_dir
+        backgroundIntensity
     end
 
     methods
@@ -169,6 +170,7 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('pairIndex', obj.pairIndex);
             epoch.addParameter('flashFrames', obj.flashFrames);
             epoch.addParameter('gapFrames', obj.gapFrames);
+            epoch.addParameter('backgroundIntensity', obj.backgroundIntensity);
         end
 
         function stimTime = get.stimTime(obj)
