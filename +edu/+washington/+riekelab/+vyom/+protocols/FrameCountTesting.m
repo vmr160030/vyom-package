@@ -38,10 +38,8 @@ classdef FrameCountTesting < manookinlab.protocols.ManookinLabStageProtocol
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
 
-            if ~obj.isMeaRig
-                obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
-            end
-
+            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
+                
             % Calculate the number of pre, stim, and tail frames.
             obj.preFrames = round(obj.preTime * 1e-3 * 60);
             obj.stimFrames = round(obj.stimTime * 1e-3 * 60);
@@ -71,6 +69,8 @@ classdef FrameCountTesting < manookinlab.protocols.ManookinLabStageProtocol
             rectVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
                 @(state)state.frame >= obj.preFrames && state.frame < (obj.preFrames + obj.stimFrames));
             p.addController(rectVisible);
+            
+            
 
             % Control intensity.
             rectColor = stage.builtin.controllers.PropertyController(rect, ...
@@ -90,19 +90,6 @@ classdef FrameCountTesting < manookinlab.protocols.ManookinLabStageProtocol
 
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-            
-            % Remove the Amp responses if it's an MEA rig.
-            if obj.isMeaRig
-                amps = obj.rig.getDevices('Amp');
-                for ii = 1:numel(amps)
-                    if epoch.hasResponse(amps{ii})
-                        epoch.removeResponse(amps{ii});
-                    end
-                    if epoch.hasStimulus(amps{ii})
-                        epoch.removeStimulus(amps{ii});
-                    end
-                end
-            end
 
             epoch.addParameter('preFrames', obj.preFrames);
             epoch.addParameter('stimFrames', obj.stimFrames);
