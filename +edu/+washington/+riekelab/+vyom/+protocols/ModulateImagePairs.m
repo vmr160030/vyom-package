@@ -31,8 +31,9 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'exc', 'inh'}) 
         sequence
         imagePaths
-        s1
-        s2
+        % s1
+        % s2
+        imageMatrix
         backgroundImage
         directory
         totalRuns
@@ -124,9 +125,9 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             function s = setImage(obj, frame)
                 flash_index = floor(frame / (obj.flashFrames + obj.gapFrames));
                 if mod(flash_index, 2) == 0
-                    s = obj.s1;
+                    s = obj.imageMatrix{1};
                 else
-                    s = obj.s2;
+                    s = obj.imageMatrix{2};
                 end
             end
         end
@@ -155,10 +156,14 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
 
             % Load s1 and s2 images
             s1 = imread(s1_path);
-            obj.s1 = uint8(s1);
+            s1 = uint8(s1);
+            % obj.s1 = uint8(s1);
 
             s2 = imread(s2_path);
-            obj.s2 = uint8(s2);
+            s2 = uint8(s2);
+            % obj.s2 = uint8(s2);
+
+            obj.imageMatrix = {s1, s2};
 
             % Create the background image from mean of s1 and s2
             obj.backgroundIntensity = mean([s1(:); s2(:)])/255;
