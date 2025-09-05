@@ -100,8 +100,8 @@ classdef ModulateImagePairs < manookinlab.protocols.ManookinLabStageProtocol
             p.setBackgroundColor(obj.backgroundIntensity)   % Set background intensity
             
             % Prep to display image
-            scene = stage.builtin.stimuli.Image(obj.s1);
-            scene.size = [size(obj.s1,2),size(obj.s1,1)]; % Retain aspect ratio.
+            scene = stage.builtin.stimuli.Image(obj.imageMatrix{1});
+            scene.size = [size(obj.imageMatrix{1},2),size(obj.imageMatrix{1},1)]; % Retain aspect ratio.
             scene.position = canvasSize/2;
             
             % Use linear interpolation when scaling the image
