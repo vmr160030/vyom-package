@@ -16,10 +16,12 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
     
     properties (Dependent) 
         preTime
+        
     end
     
     properties (Hidden)
         ampType
+        src_size
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'exc', 'inh'}) 
         sequence
         imagePaths
@@ -101,8 +103,10 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             p.setBackgroundColor(obj.backgroundIntensity)   % Set background intensity
             
             % Prep to display movie
-            scene = stage.builtin.stimuli.Movie(fullfile(obj.stage_movie_directory,obj.movie_name));
-            scene.size = [canvasSize(1),canvasSize(2)];
+            file = fullfile(obj.stage_movie_directory,obj.movie_name);
+            scene = stage.builtin.stimuli.Movie(file);
+            %scene.size = [canvasSize(1),canvasSize(2)];
+            scene.size = [obj.src_size(1), obj.src_size(2)];
             scene.position = canvasSize/2;
             scene.setPlaybackSpeed(PlaybackSpeed.FRAME_BY_FRAME); % Make sure playback is one frame at a time.
             
@@ -122,6 +126,11 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             
             mov_name = obj.sequence(mod(obj.numEpochsCompleted,length(obj.sequence)) + 1);
             obj.movie_name = obj.imagePaths{mov_name,1};
+            
+            % weird hack to get mp4 array dimensions, videoReader didn't
+            % work with codec error and Movie obj has private stuff.
+            file = fullfile(obj.stage_movie_directory,obj.movie_name);
+            obj.src_size = VideoSource(file).size;
             
             epoch.addParameter('movieName',obj.imagePaths{mov_name,1});
             epoch.addParameter('folder',obj.local_movie_directory);
