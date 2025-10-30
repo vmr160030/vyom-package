@@ -129,7 +129,7 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             
             % weird hack to get mp4 array dimensions, videoReader didn't
             % work with codec error and Movie obj has private stuff.
-            file = fullfile(obj.stage_movie_directory,obj.movie_name);
+            file = fullfile(obj.local_movie_directory,obj.movie_name);
             obj.src_size = VideoSource(file).size;
             
             epoch.addParameter('movieName',obj.imagePaths{mov_name,1});
