@@ -41,7 +41,7 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function prepareRun(obj)
-
+            disp('preparing run');
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
 
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
@@ -90,12 +90,12 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
                 obj.sequence = (1:size(obj.imagePaths,1))' * ones(1,num_reps);
                 obj.sequence = obj.sequence(:);
             end
-            
+            disp('done preparing run');
         end
 
         
         function p = createPresentation(obj)
-            
+            disp('preparing presentation');
             % Stage presets
             canvasSize = obj.rig.getDevice('Stage').getCanvasSize();     
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
@@ -119,9 +119,11 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             sceneVisible = stage.builtin.controllers.PropertyController(scene, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
             p.addController(sceneVisible);
+            disp('done preparing presentation');
         end
         
         function prepareEpoch(obj, epoch)
+            disp('preparing epoch')
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
             
             mov_name = obj.sequence(mod(obj.numEpochsCompleted,length(obj.sequence)) + 1);
@@ -137,6 +139,8 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             if obj.randomize
                 epoch.addParameter('seed',obj.seed);
             end
+            disp(obj.src_size);
+            disp('done preparing epoch');
         end
         
         function preTime = get.preTime(obj)
