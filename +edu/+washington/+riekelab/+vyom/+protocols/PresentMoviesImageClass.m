@@ -141,16 +141,24 @@ classdef PresentMoviesImageClass < manookinlab.protocols.ManookinLabStageProtoco
             % weird hack to get mp4 array dimensions, videoReader didn't
             % work with codec error and Movie obj has private stuff.
             file = fullfile(obj.local_movie_directory,obj.movie_name);
-            obj.src_size = VideoSource(file).size;
+            src = VideoSource(file);
+            obj.src_size = src.size;
 
-            % Use VideoReader to load frames
-            vr = VideoReader(file);
-            obj.frameRate = vr.FrameRate;
-            obj.numFrames = floor(vr.Duration * vr.FrameRate);
+            obj.numFrames = floor(src.duration / 1e6 * 60); % duration is in microseconds, assume 60Hz
+            obj.frameRate = 60; % You may want to set this based on your rig or src
+            
+            % Load all frames using VideoSource
             frames = cell(obj.numFrames,1);
+            timestamps = zeros(obj.numFrames,1);
             for k = 1:obj.numFrames
-                frames{k} = readFrame(vr);
+                [img, timestamp] = src.nextImage();
+                if isempty(img)
+                    break;
+                end
+                frames{k} = img;
+                timestamps(k) = timestamp;
             end
+            frames = frames(~cellfun(@isempty,frames));
             obj.imageMatrix = frames;
 
             obj.backgroundImage = uint8(255 * obj.backgroundIntensity * ones(obj.src_size(2), obj.src_size(1)));
