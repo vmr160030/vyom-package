@@ -154,6 +154,8 @@ classdef PresentMoviesImageClass < manookinlab.protocols.ManookinLabStageProtoco
                 if isempty(img)
                     break;
                 end
+                % Keep only first channel
+                img = img(:,:,1);
                 frames{k} = img;
                 timestamps(k) = timestamp;
             end
