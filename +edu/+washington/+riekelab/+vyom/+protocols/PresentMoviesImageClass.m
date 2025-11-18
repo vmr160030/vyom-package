@@ -144,8 +144,7 @@ classdef PresentMoviesImageClass < manookinlab.protocols.ManookinLabStageProtoco
             src = VideoSource(file);
             obj.src_size = src.size;
 
-            obj.numFrames = floor(src.duration / 1e6 * 60); % duration is in microseconds, assume 60Hz
-            obj.frameRate = 60; % You may want to set this based on your rig or src
+            obj.numFrames = floor(src.duration / 1e6 * obj.frameRate);
             
             % Load all frames using VideoSource
             frames = cell(obj.numFrames,1);
