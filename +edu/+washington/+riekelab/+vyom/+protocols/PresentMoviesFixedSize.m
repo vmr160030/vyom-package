@@ -104,8 +104,8 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             
             % Prep to display movie
             file = fullfile(obj.stage_movie_directory,obj.movie_name);
-            scene = stage.builtin.stimuli.Movie(file);
-            %scene.size = [canvasSize(1),canvasSize(2)];
+            %scene = stage.builtin.stimuli.Movie(file);
+            scene = MoviePatternMode(file);
             scene.size = [obj.src_size(1), obj.src_size(2)];
             scene.position = canvasSize/2;
             scene.setPlaybackSpeed(PlaybackSpeed.FRAME_BY_FRAME); % Make sure playback is one frame at a time.
