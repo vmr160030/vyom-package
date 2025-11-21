@@ -22,6 +22,7 @@ classdef PresentMoviesImageClass < manookinlab.protocols.ManookinLabStageProtoco
         sequence
         imagePaths
         imageMatrix
+        numFrames
         backgroundImage
         local_movie_directory
         stage_movie_directory
