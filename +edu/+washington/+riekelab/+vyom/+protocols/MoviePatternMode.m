@@ -1,4 +1,4 @@
-classdef Movie < stage.core.Stimulus
+classdef MoviePatternMode < stage.core.Stimulus
     % A movie player stimulus capable of playing a wide variety of video formats (see libavcodec). Sound is not supported.
     
     properties
@@ -27,7 +27,7 @@ classdef Movie < stage.core.Stimulus
 
     methods
         
-        function obj = Movie(filename)
+        function obj = MoviePatternMode(filename)
             % Constructs a movie stimulus using the movie with the specified filename. The filename should contain a
             % relative or complete file path if the movie is not in the current working directory.
             
