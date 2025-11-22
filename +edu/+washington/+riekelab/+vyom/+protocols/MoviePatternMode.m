@@ -128,6 +128,10 @@ classdef Movie < stage.core.Stimulus
 
         function performDraw(obj)
             frame = obj.player.getImage();
+            if size(frame, 3) == 1
+                frame = repmat(frame, 1, 1, 3);
+            end
+
             if ~isempty(frame)
                 obj.texture.setSubImage(frame);
             end
@@ -143,8 +147,10 @@ classdef Movie < stage.core.Stimulus
             modelView.scale(obj.size(1) / 2, obj.size(2) / 2, 1);
 
             c = obj.color;
-            if length(c) == 3
-                c = c(1)
+            if length(c) == 1
+                c = [c, c, c, obj.opacity];
+            elseif length(c) == 3
+                c = [c, obj.opacity];
             end
 
             obj.canvas.drawArray(obj.vao, GL.TRIANGLE_STRIP, 0, 4, c, obj.mask, obj.texture, obj.filter);
