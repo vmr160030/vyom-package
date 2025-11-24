@@ -4,6 +4,7 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
     
     properties
         amp                             % Output amplifier
+        preTime    = 250               % Leading duration in msec
         stimTime    = 15000             % Stimulus duration in msec
         tailTime    = 250               % Trailing duration in msec
         fileFolder = 'balloons_v1';     % Folder containing videos
@@ -11,11 +12,6 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
         randomize = true;               % whether to randomize movies shown
         onlineAnalysis = 'none'
         numberOfAverages = uint16(5) % number of epochs to queue
-        
-    end
-    
-    properties (Dependent) 
-        preTime
         
     end
     
@@ -141,10 +137,6 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             end
             disp(obj.src_size);
             disp('done preparing epoch');
-        end
-        
-        function preTime = get.preTime(obj)
-            preTime = 0;
         end
 
         function tf = shouldContinuePreparingEpochs(obj)
