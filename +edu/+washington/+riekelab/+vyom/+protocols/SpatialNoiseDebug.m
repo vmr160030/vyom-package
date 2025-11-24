@@ -4,10 +4,10 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         preTime = 250                   % Noise leading duration (ms)
         uniqueTime = 5000             % Duration of unique noise sequence (ms)
         repeatTime = 0              % Duration of repeating sequence at end of epoch (ms)
-        tailTime = 250                  % Noise trailing duration (ms)
+        tailTime = 0                  % Noise trailing duration (ms)
         contrast = 1
-        stixelSizes = [90,150]           % Edge length of stixel (microns)
-        gridSize = 30                   % Size of underling grid
+        stixelSizes = [90,90]           % Edge length of stixel (microns)
+        gridSize = 90                   % Size of underling grid
         gaussianFilter = false          % Whether to use a Gaussian filter
         filterSdStixels = 1.0           % Gaussian filter standard dev in stixels.
         backgroundIntensity = 0.5       % Background light intensity (0-1)
@@ -15,13 +15,16 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         randomSeedSequence = 'every 2 epochs' % Determines how many epochs between updates to noise seed.
         chromaticClass = 'BY'   % Chromatic type
         onlineAnalysis = 'none'
-        numberOfAverages = uint16(20)  % Number of epochs
+        numberOfAverages = uint16(1)  % Number of epochs
+        seed = 1;                      % Random seed
+        stixelSizePix = 27;              % Stixel size in pixels
+        stixelShiftPix = 27;             % Stixel shift in pixels
     end
     
     properties (Dependent) 
         stimTime
     end
-    
+
     properties (Hidden)
         ampType
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
@@ -35,7 +38,6 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         numYStixels
         numXChecks
         numYChecks
-        seed
         start_seed
         numFrames
         stixelSizePix
@@ -377,28 +379,28 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             obj.frameDwell = obj.frameDwells(mod(obj.numEpochsCompleted, length(obj.frameDwells))+1);
             
             % Deal with the seed.
-            if obj.numEpochsCompleted == 0
-                obj.start_seed = RandStream.shuffleSeed;
-                obj.seed = obj.start_seed;
-            else
-                switch obj.randomSeedSequence
-                    case 'every epoch'
-                        obj.seed = obj.start_seed + 1;
-                    case 'every 2 epochs'
-                        obj.seed = obj.start_seed + floor(obj.numEpochsCompleted/2);
-                    case 'every 3 epochs'
-                        obj.seed = obj.start_seed + floor(obj.numEpochsCompleted/3);
-                    case 'repeat seed'
-                        obj.seed = 1;
-                end
-            end
+            % if obj.numEpochsCompleted == 0
+            %     obj.start_seed = RandStream.shuffleSeed;
+            %     obj.seed = obj.start_seed;
+            % else
+            %     switch obj.randomSeedSequence
+            %         case 'every epoch'
+            %             obj.seed = obj.start_seed + 1;
+            %         case 'every 2 epochs'
+            %             obj.seed = obj.start_seed + floor(obj.numEpochsCompleted/2);
+            %         case 'every 3 epochs'
+            %             obj.seed = obj.start_seed + floor(obj.numEpochsCompleted/3);
+            %         case 'repeat seed'
+            %             obj.seed = 1;
+            %     end
+            % end
             
             obj.stepsPerStixel = max(round(obj.stixelSize / obj.gridSize), 1);
             
             gridSizePix = obj.rig.getDevice('Stage').um2pix(obj.gridSize);
 %             gridSizePix = obj.gridSize/(10000.0/obj.rig.getDevice('Stage').um2pix(10000.0));
-            obj.stixelSizePix = gridSizePix * obj.stepsPerStixel;
-            obj.stixelShiftPix = obj.stixelSizePix / obj.stepsPerStixel;
+            % obj.stixelSizePix = gridSizePix * obj.stepsPerStixel;
+            % obj.stixelShiftPix = obj.stixelSizePix / obj.stepsPerStixel;
             
             % Calculate the number of X/Y checks.
             obj.numXStixels = ceil(obj.canvasSize(1)/obj.stixelSizePix) + 1;
@@ -410,6 +412,7 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             disp(['steps per stixel: ', num2str(obj.stepsPerStixel)]);
             disp(['grid size (pix): ', num2str(gridSizePix)]);
             disp(['stixel size (pix): ', num2str(obj.stixelSizePix)]);
+            disp(['stixel shift (pix): ', num2str(obj.stixelShiftPix)]);
 
             disp(['num checks, x: ',num2str(obj.numXChecks),'; y: ',num2str(obj.numYChecks)]);
             disp(['num stixels, x: ',num2str(obj.numXStixels),'; y: ',num2str(obj.numYStixels)]);
