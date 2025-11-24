@@ -5,13 +5,13 @@ classdef SingleSpotPositionTest < edu.washington.riekelab.protocols.RiekeLabStag
         amp                             % Output amplifier
         preTime = 250                   % Spot leading duration (ms)
         stimTime = 250                  % Spot duration (ms)
-        tailTime = 250                  % Spot trailing duration (ms)
+        tailTime = 0                  % Spot trailing duration (ms)
         spotIntensity = 1.0             % Spot light intensity (0-1)
         spotDiameter = 300              % Spot diameter size (um)
         position = [0, 0]               % Spot position (um)
         psth=true
         backgroundIntensity = 0.5       % Background light intensity (0-1)
-        numberOfAverages = uint16(5)    % Number of epochs
+        numberOfAverages = uint16(1)    % Number of epochs
         interpulseInterval = 0          % Duration between spots (s)
         
     end
