@@ -40,8 +40,6 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         numYChecks
         start_seed
         numFrames
-        stixelSizePix
-        stixelShiftPix
         imageMatrix
         noiseStream
         positionStream
