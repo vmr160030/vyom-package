@@ -12,7 +12,8 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
         randomize = true;               % whether to randomize movies shown
         onlineAnalysis = 'none'
         numberOfAverages = uint16(5) % number of epochs to queue
-        
+        local_parent_directory = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\'; % General folder
+        stage_parent_directory = 'Y:\\movies\'; % General folder
     end
     
     properties (Hidden)
@@ -42,26 +43,26 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
 
             obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
 
-            try
-                movie_dir = obj.rig.getDevice('Stage').getConfigurationSetting('local_movie_directory');
-                if isempty(movie_dir)
-                    movie_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
-                end
-            catch
-                movie_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
-            end
-            try
-                stage_dir = obj.rig.getDevice('Stage').getConfigurationSetting('stage_movie_directory');
-                if isempty(stage_dir)
-                    stage_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
-                end
-            catch
-                stage_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
-            end
-            obj.stage_movie_directory = strcat(stage_dir, obj.fileFolder);
+            % try
+            %     movie_dir = obj.rig.getDevice('Stage').getConfigurationSetting('local_movie_directory');
+            %     if isempty(movie_dir)
+            %         movie_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
+            %     end
+            % catch
+            %     movie_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
+            % end
+            % try
+            %     stage_dir = obj.rig.getDevice('Stage').getConfigurationSetting('stage_movie_directory');
+            %     if isempty(stage_dir)
+            %         stage_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
+            %     end
+            % catch
+            %     stage_dir = 'C:\Users\Public\Documents\GitRepos\Symphony2\movies\';
+            % end
+            obj.stage_movie_directory = strcat(obj.stage_parent_directory, obj.fileFolder);
 
             % General directory
-            obj.local_movie_directory = strcat(movie_dir, obj.fileFolder); % General folder
+            obj.local_movie_directory = strcat(obj.local_parent_directory, obj.fileFolder); % General folder
             D = dir(obj.local_movie_directory);
             
             obj.imagePaths = cell(size(D,1),1);
@@ -100,8 +101,7 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             
             % Prep to display movie
             file = fullfile(obj.stage_movie_directory,obj.movie_name);
-            %scene = stage.builtin.stimuli.Movie(file);
-            scene =  edu.washington.riekelab.vyom.protocols.MoviePatternMode(file);
+            scene = stage.builtin.stimuli.Movie(file);
             scene.size = [obj.src_size(1), obj.src_size(2)];
             scene.position = canvasSize/2;
             scene.setPlaybackSpeed(PlaybackSpeed.FRAME_BY_FRAME); % Make sure playback is one frame at a time.
