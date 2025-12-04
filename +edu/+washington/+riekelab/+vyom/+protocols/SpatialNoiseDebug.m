@@ -17,8 +17,7 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         onlineAnalysis = 'none'
         numberOfAverages = uint16(1)  % Number of epochs
         seed = 1;                      % Random seed
-        stixelSizePix = 27;              % Stixel size in pixels
-        stixelShiftPix = 27;             % Stixel shift in pixels
+        stixShrink = 3;
     end
     
     properties (Dependent) 
@@ -33,6 +32,8 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         frameDwellsType = symphonyui.core.PropertyType('denserealdouble','matrix')
         randomSeedSequenceType = symphonyui.core.PropertyType('char','row',{'every epoch','every 2 epochs','every 3 epochs','repeat seed'})
         stixelSize
+        stixelSizePix
+        stixelShiftPix
         stepsPerStixel
         numXStixels
         numYStixels
@@ -410,13 +411,13 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             obj.stepsPerStixel = max(round(obj.stixelSize / obj.gridSize), 1);
             
             gridSizePix = obj.rig.getDevice('Stage').um2pix(obj.gridSize);
-%             gridSizePix = obj.gridSize/(10000.0/obj.rig.getDevice('Stage').um2pix(10000.0));
-            % obj.stixelSizePix = gridSizePix * obj.stepsPerStixel;
-            % obj.stixelShiftPix = obj.stixelSizePix / obj.stepsPerStixel;
+            gridSizePix = obj.gridSize/(10000.0/obj.rig.getDevice('Stage').um2pix(10000.0));
+            obj.stixelSizePix = gridSizePix * obj.stepsPerStixel;
+            obj.stixelShiftPix = obj.stixelSizePix / obj.stepsPerStixel;
             
             % Calculate the number of X/Y checks.
-            obj.numXStixels = ceil(obj.canvasSize(1)/obj.stixelSizePix) + 1;
-            obj.numYStixels = ceil(obj.canvasSize(2)/obj.stixelSizePix) + 1;
+            obj.numXStixels = ceil(obj.canvasSize(1)/obj.stixelSizePix) + 1 - obj.stixShrink;
+            obj.numYStixels = ceil(obj.canvasSize(2)/obj.stixelSizePix) + 1 - obj.stixShrink;
             obj.numXChecks = ceil(obj.canvasSize(1)/gridSizePix);
             obj.numYChecks = ceil(obj.canvasSize(2)/gridSizePix);
             
