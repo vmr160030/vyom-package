@@ -154,6 +154,20 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             
             % Add the stimulus to the presentation.
             p.addStimulus(checkerboard);
+
+            % Make a rectangle at the edges of the checkerboard to highlight those edges
+            checkerboard_size = [obj.numXStixels, obj.numYStixels] * obj.stixelSizePix;
+            rect_left = stage.builtin.stimuli.Rectangle();
+            rect_left.position = [obj.canvasSize(1) - checkerboard_size(1), obj.canvasSize(2)/2];
+            rect_left.size = [2, obj.canvasSize(2)];
+            rect_left.color = 1.0;
+            p.addStimulus(rect_left);
+
+            rect_top = stage.builtin.stimuli.Rectangle();
+            rect_top.position = [obj.canvasSize(1)/2, obj.canvasSize(2) - checkerboard_size(2)];
+            rect_top.size = [obj.canvasSize(1), 2];
+            rect_top.color = 1.0;
+            p.addStimulus(rect_top);
             
             gridVisible = stage.builtin.controllers.PropertyController(checkerboard, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3 * 1.011);
