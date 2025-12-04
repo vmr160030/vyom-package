@@ -411,7 +411,7 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             obj.stepsPerStixel = max(round(obj.stixelSize / obj.gridSize), 1);
             
             gridSizePix = obj.rig.getDevice('Stage').um2pix(obj.gridSize);
-            gridSizePix = obj.gridSize/(10000.0/obj.rig.getDevice('Stage').um2pix(10000.0));
+            % gridSizePix = obj.gridSize/(10000.0/obj.rig.getDevice('Stage').um2pix(10000.0));
             obj.stixelSizePix = gridSizePix * obj.stepsPerStixel;
             obj.stixelShiftPix = obj.stixelSizePix / obj.stepsPerStixel;
             
