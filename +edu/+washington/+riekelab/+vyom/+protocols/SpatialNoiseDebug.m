@@ -387,14 +387,6 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         function prepareEpoch(obj, epoch)
             disp('preparing epoch')
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-
-            % Compute jitter trajectory
-            obj.jitter_traj = zeros(2, obj.numFrames);
-            for f = 1:obj.numFrames
-                obj.jitter_traj(:,f) = obj.computeJitter(f);
-            end
-            disp('computed jitter trajectory');
-            disp(obj.jitter_traj);
             
             % Remove the Amp responses if it's an MEA rig.
             if obj.isMeaRig
@@ -466,6 +458,14 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             obj.positionStream = RandStream('mt19937ar', 'Seed', obj.seed);
             obj.noiseStreamRep = RandStream('mt19937ar', 'Seed', 1);
             obj.positionStreamRep = RandStream('mt19937ar', 'Seed', 1);
+
+            % Compute jitter trajectory
+            obj.jitter_traj = zeros(2, obj.numFrames);
+            for f = 1:obj.numFrames
+                obj.jitter_traj(:,f) = obj.computeJitter(f);
+            end
+            disp('computed jitter trajectory');
+            disp(obj.jitter_traj);
              
             epoch.addParameter('seed', obj.seed);
             disp(['seed ', num2str(obj.seed)]);
