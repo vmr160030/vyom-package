@@ -342,7 +342,8 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
                     %             + obj.canvasSize / 2;
                     %     end
                     % end
-                    xy = obj.jitter_traj(:,frame)';
+                    step = obj.jitter_traj(:,frame)';
+                    xy = obj.stixelShiftPix*step + obj.canvasSize / 2;
                 else
                     xy = obj.canvasSize / 2;
                 end
@@ -367,21 +368,25 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function p = computeJitter(obj, frame)
-            persistent xy;
+            % persistent xy;
+            persistent step;
             if frame > 0
                 if mod(frame, obj.frameDwell) == 0
                     if frame <= obj.unique_frames
-                        xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStream.rand(1,2))) ...
-                            + obj.canvasSize / 2;
+                        % xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStream.rand(1,2))) ...
+                        %     + obj.canvasSize / 2;
+                        step = round((obj.stepsPerStixel-1)*(obj.positionStream.rand(1,2)));
                     else
-                        xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStreamRep.rand(1,2))) ...
-                            + obj.canvasSize / 2;
+                        % xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStreamRep.rand(1,2))) ...
+                            % + obj.canvasSize / 2;
+                        step = round((obj.stepsPerStixel-1)*(obj.positionStreamRep.rand(1,2)));
                     end
                 end
             else
-                xy = obj.canvasSize / 2;
+                % xy = obj.canvasSize / 2;
             end
-            p = xy;
+            % p = xy;
+            p = step;
         end
         
         function prepareEpoch(obj, epoch)
