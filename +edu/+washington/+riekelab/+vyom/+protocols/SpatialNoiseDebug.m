@@ -465,8 +465,8 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             obj.positionStreamRep = RandStream('mt19937ar', 'Seed', 1);
 
             % Compute jitter trajectory
-            obj.jitter_traj = zeros(2, obj.numFrames);
-            for f = 1:obj.numFrames
+            obj.jitter_traj = zeros(2, obj.unique_frames + obj.repeat_frames);
+            for f = 1:obj.unique_frames + obj.repeat_frames
                 obj.jitter_traj(:,f) = obj.computeJitter(f);
             end
             disp('computed jitter trajectory');
