@@ -17,7 +17,7 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         onlineAnalysis = 'none'
         numberOfAverages = uint16(1)  % Number of epochs
         seed = 1;                      % Random seed
-        stixShrink = 3;
+        stixShrink = 0;
     end
     
     properties (Dependent) 
@@ -52,6 +52,7 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         unique_frames
         repeat_frames
         time_multiple
+        jitter_traj
     end
     
     properties (Dependent, SetAccess = private)
@@ -332,15 +333,16 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             function p = setJitter(obj, frame)
                 persistent xy;
                 if frame > 0
-                    if mod(frame, obj.frameDwell) == 0
-                        if frame <= obj.unique_frames
-                            xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStream.rand(1,2))) ...
-                                + obj.canvasSize / 2;
-                        else
-                            xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStreamRep.rand(1,2))) ...
-                                + obj.canvasSize / 2;
-                        end
-                    end
+                    % if mod(frame, obj.frameDwell) == 0
+                    %     if frame <= obj.unique_frames
+                    %         xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStream.rand(1,2))) ...
+                    %             + obj.canvasSize / 2;
+                    %     else
+                    %         xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStreamRep.rand(1,2))) ...
+                    %             + obj.canvasSize / 2;
+                    %     end
+                    % end
+                    xy = obj.jitter_traj(:,frame)';
                 else
                     xy = obj.canvasSize / 2;
                 end
@@ -364,9 +366,34 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
             disp('done preparing presentation');
         end
 
+        function p = computeJitter(obj, frame)
+            if frame > 0
+                if mod(frame, obj.frameDwell) == 0
+                    if frame <= obj.unique_frames
+                        xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStream.rand(1,2))) ...
+                            + obj.canvasSize / 2;
+                    else
+                        xy = obj.stixelShiftPix*round((obj.stepsPerStixel-1)*(obj.positionStreamRep.rand(1,2))) ...
+                            + obj.canvasSize / 2;
+                    end
+                end
+            else
+                xy = obj.canvasSize / 2;
+            end
+            p = xy;
+        end
+        
         function prepareEpoch(obj, epoch)
             disp('preparing epoch')
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
+
+            % Compute jitter trajectory
+            obj.jitter_traj = zeros(2, obj.numFrames);
+            for f = 1:obj.numFrames
+                obj.jitter_traj(:,f) = obj.computeJitter(f);
+            end
+            disp('computed jitter trajectory');
+            disp(obj.jitter_traj);
             
             % Remove the Amp responses if it's an MEA rig.
             if obj.isMeaRig
