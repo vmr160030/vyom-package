@@ -367,6 +367,7 @@ classdef SpatialNoiseDebug < manookinlab.protocols.ManookinLabStageProtocol
         end
 
         function p = computeJitter(obj, frame)
+            persistent xy;
             if frame > 0
                 if mod(frame, obj.frameDwell) == 0
                     if frame <= obj.unique_frames
