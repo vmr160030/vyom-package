@@ -103,7 +103,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
                     obj.color = [0,obj.intensity,0];
                 end
             else
-                obj.color = obj.intensity*ones(1,3);
+                obj.color = obj.intensity;
                 if obj.intensity > 0.5
                     flashColor = 'white';
                 else
