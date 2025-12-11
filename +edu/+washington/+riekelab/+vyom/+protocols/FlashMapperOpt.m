@@ -117,6 +117,8 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             epoch.addParameter('numChecks',obj.numChecks);
             epoch.addParameter('position', obj.position);
             epoch.addParameter('flashColor', flashColor);
+            disp(['Epoch ' num2str(obj.numEpochsCompleted+1) ': ' flashColor ' at position (' num2str(obj.position(1)) ', ' num2str(obj.position(2)) ')']);
+            disp(['    Intensity: ' num2str(obj.intensity)]);
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
