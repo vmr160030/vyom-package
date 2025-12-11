@@ -47,6 +47,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             obj.numChecks = edgeChecks^2;
             [x,y] = meshgrid(linspace(-obj.stixelSizePix*edgeChecks/2+obj.stixelSizePix/2,obj.stixelSizePix*edgeChecks/2-obj.stixelSizePix/2,edgeChecks));
             obj.positions = [x(:), y(:)];
+            disp(['Total number of positions: ' num2str(size(obj.positions,1))]);
             
             % Online analysis figures
             % obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
