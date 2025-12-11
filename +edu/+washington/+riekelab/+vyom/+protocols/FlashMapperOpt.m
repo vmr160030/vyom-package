@@ -23,6 +23,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         positions
         position
         numChecks
+        color
     end
     
     methods
@@ -71,7 +72,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             rect.size = obj.stixelSizePix*ones(1,2);
             rect.position = obj.canvasSize/2 + obj.position;
             rect.orientation = 0;
-            rect.color = obj.intensity;
+            rect.color = obj.color;
             
             % Add the stimulus to the presentation.
             p.addStimulus(rect);
@@ -88,18 +89,18 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             if strcmp(obj.chromaticClass, 'BY') % blue-yellow
                 if obj.intensity > 0.5
                     flashColor = 'blue';
-                    obj.intensity = [0,0,obj.intensity];
+                    obj.color = [0,0,obj.intensity];
                 else
                     flashColor = 'yellow';
-                    obj.intensity = [obj.intensity*ones(1,2),0];
+                    obj.color = [obj.intensity*ones(1,2),0];
                 end
             elseif strcmp(obj.chromaticClass, 'RG') % red-green
                 if obj.intensity > 0.5
                     flashColor = 'red';
-                    obj.intensity = [obj.intensity,0,0];
+                    obj.color = [obj.intensity,0,0];
                 else
                     flashColor = 'green';
-                    obj.intensity = [0,obj.intensity,0];
+                    obj.color = [0,obj.intensity,0];
                 end
             else
                 if obj.intensity > 0.5
