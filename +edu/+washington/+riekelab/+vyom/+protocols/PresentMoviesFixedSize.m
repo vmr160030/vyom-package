@@ -9,6 +9,7 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
         tailTime    = 250               % Trailing duration in msec
         fileFolder = 'balloons_v1';     % Folder containing videos
         backgroundIntensity = 0.5;      % 0 - 1 (corresponds to image intensities in folder)
+        magnificationFactor = 1.0;     % factor to scale movie size. 1.0 will play at original size.
         randomize = true;               % whether to randomize movies shown
         onlineAnalysis = 'none'
         numberOfAverages = uint16(5) % number of epochs to queue
@@ -102,7 +103,7 @@ classdef PresentMoviesFixedSize < manookinlab.protocols.ManookinLabStageProtocol
             % Prep to display movie
             file = fullfile(obj.stage_movie_directory,obj.movie_name);
             scene = stage.builtin.stimuli.Movie(file);
-            scene.size = [obj.src_size(1), obj.src_size(2)];
+            scene.size = [obj.src_size(1), obj.src_size(2)] * obj.magnificationFactor;
             scene.position = canvasSize/2;
             scene.setPlaybackSpeed(PlaybackSpeed.FRAME_BY_FRAME); % Make sure playback is one frame at a time.
             
