@@ -6,7 +6,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         stimTime = 500                  % Stimulus duration (ms)
         tailTime = 500                  % Stimulus trailing duration (ms)
         gridWidth = 300                 % Width of mapping grid (microns)
-        stixelSize = 50                 % Stixel edge size (microns)
+        stixelSize = 500                 % Stixel edge size (microns)
         intensity = 1.0                  % Intensity (0 - 1)
         chromaticClass = 'achromatic'   % Chromatic type
         backgroundIntensity = 0      % Background light intensity (0-1)
@@ -103,12 +103,11 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
                     obj.color = [0,obj.intensity,0];
                 end
             else
+                obj.color = obj.intensity*ones(1,3);
                 if obj.intensity > 0.5
                     flashColor = 'white';
-                    obj.color = obj.intensity*ones(1,3);
                 else
                     flashColor = 'black';
-                    obj.color = obj.intensity*ones(1,3);
                 end
             end
             
