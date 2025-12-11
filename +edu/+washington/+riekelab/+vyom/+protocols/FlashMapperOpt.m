@@ -113,7 +113,6 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             
             epoch.addParameter('numChecks',obj.numChecks);
             epoch.addParameter('position', obj.position);
-            epoch.addParameter('stimContrast', obj.stimContrast);
             epoch.addParameter('flashColor', flashColor);
         end
         
