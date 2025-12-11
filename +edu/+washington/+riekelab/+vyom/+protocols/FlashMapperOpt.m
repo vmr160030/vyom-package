@@ -39,6 +39,9 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
             obj.gridWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gridWidth);
 
+            % Assert grid width > stixel size
+            assert(obj.gridWidthPix >= obj.stixelSizePix, 'Grid width must be greater than or equal to stixel size.');
+
             % Get the number of checkers
             edgeChecks = ceil(obj.gridWidthPix / obj.stixelSizePix);
             obj.numChecks = edgeChecks^2;
