@@ -111,7 +111,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
                 end
             end
             
-            obj.position = obj.positions(mod(floor(obj.numEpochsCompleted/2),length(obj.positions))+1,:);
+            obj.position = obj.positions(mod(obj.numEpochsCompleted,length(obj.positions))+1,:);
             
             epoch.addParameter('intensity', obj.intensity);
             epoch.addParameter('numChecks',obj.numChecks);
