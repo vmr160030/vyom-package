@@ -11,7 +11,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
     properties (Access = private)
         axesHandles
         traceHandles
-        heatmapHandle
+        scatterHandle
         traces
         positions
         xvals
@@ -19,6 +19,9 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
         peakMinusBaseline
         edgeChecks
         positionList
+        spotX
+        spotY
+        spotC
     end
 
     methods
@@ -48,12 +51,14 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             obj.positionList = {};
             obj.traces = {};
             obj.peakMinusBaseline = nan(obj.edgeChecks, obj.edgeChecks);
-
+            obj.spotX = [];
+            obj.spotY = [];
+            obj.spotC = [];
             obj.createUi();
         end
 
         function createUi(obj)
-            % 2x1 grid: top for traces, bottom for heatmap
+            % 2x1 grid: top for traces, bottom for scatter spots
             obj.axesHandles(1) = subplot(2,1,1, ...
                 'Parent', obj.figureHandle, ...
                 'FontUnits', get(obj.figureHandle, 'DefaultUicontrolFontUnits'), ...
@@ -69,11 +74,11 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
                 'FontUnits', get(obj.figureHandle, 'DefaultUicontrolFontUnits'), ...
                 'FontName', get(obj.figureHandle, 'DefaultUicontrolFontName'), ...
                 'FontSize', get(obj.figureHandle, 'DefaultUicontrolFontSize'));
-            obj.heatmapHandle = imagesc('XData', unique(obj.xvals), 'YData', unique(obj.yvals), ...
-                'CData', obj.peakMinusBaseline, 'Parent', obj.axesHandles(2));
+            hold(obj.axesHandles(2), 'on');
+            obj.scatterHandle = scatter(obj.axesHandles(2), [], [], 100, [], 'filled');
             axis(obj.axesHandles(2), 'image');
             colorbar(obj.axesHandles(2));
-            title(obj.axesHandles(2), 'Peak - Baseline Heatmap');
+            title(obj.axesHandles(2), 'Peak - Baseline Spots');
             xlabel(obj.axesHandles(2), 'X Position (\mum)');
             ylabel(obj.axesHandles(2), 'Y Position (\mum)');
         end
@@ -84,10 +89,13 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             obj.traces = {};
             obj.positionList = {};
             obj.peakMinusBaseline(:) = nan;
-            set(obj.heatmapHandle, 'CData', obj.peakMinusBaseline);
+            obj.spotX = [];
+            obj.spotY = [];
+            obj.spotC = [];
+            set(obj.scatterHandle, 'XData', [], 'YData', [], 'CData', []);
         end
 
-        function handleEpoch(obj, epoch)
+function handleEpoch(obj, epoch)
             if ~epoch.hasResponse(obj.device)
                 disp('No response for this epoch, skipping.');
                 return;
@@ -133,13 +141,23 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             peak = max(quantities(stimStart:stimEnd));
             pkbl = peak - baseline;
 
-            % Find grid index for this position
-            [~, idx] = min(sum((obj.positions - pos).^2, 2));
-            [row, col] = ind2sub(size(obj.xvals), idx);
-            obj.peakMinusBaseline(row, col) = pkbl;
+            % Store spot data
+            obj.spotX(end+1) = pos(1);
+            obj.spotY(end+1) = pos(2);
+            obj.spotC(end+1) = pkbl;
 
-            % Update heatmap
-            set(obj.heatmapHandle, 'CData', obj.peakMinusBaseline);
+            % Update scatter plot
+            set(obj.scatterHandle, 'XData', obj.spotX, 'YData', obj.spotY, 'CData', obj.spotC);
+
+            % Optionally, update color limits for better contrast
+            if numel(obj.spotC) > 1
+                clim = [min(obj.spotC) max(obj.spotC)];
+                if clim(1) == clim(2)
+                    clim = clim + [-1 1]*0.01; % avoid zero range
+                end
+                set(obj.axesHandles(2), 'CLim', clim);
+            end
+
             drawnow;
         end
     end
