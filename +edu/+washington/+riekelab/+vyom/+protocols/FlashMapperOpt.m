@@ -5,7 +5,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         preTime = 250                   % Stimulus leading duration (ms)
         stimTime = 500                  % Stimulus duration (ms)
         tailTime = 500                  % Stimulus trailing duration (ms)
-        gridWidth = 1000                 % Width of mapping grid (microns). Must be larger than stixelSize
+        gridWidth = 2000                 % Width of mapping grid (microns). Must be larger than stixelSize
         stixelSize = 500                 % Stixel edge size (microns)
         intensity = 1.0                  % Intensity (0 - 1)
         colorChannel = 0                  % Color channel (0 for achromatic, 1 for red, 2 for green, 3 for blue)
@@ -74,18 +74,21 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             p = stage.core.Presentation((obj.preTime + obj.stimTime + obj.tailTime) * 1e-3);
             p.setBackgroundColor(obj.backgroundIntensity);
             
-            rect = stage.builtin.stimuli.Rectangle();
-            rect.size = obj.stixelSizePix*ones(1,2);
-            rect.position = obj.canvasSize/2 + obj.position;
-            rect.orientation = 0;
-            rect.color = obj.color;
+            % spot = stage.builtin.stimuli.Rectangle();
+            spot = stage.builtin.stimuli.Ellipse();
+            % spot.size = obj.stixelSizePix*ones(1,2);
+            spot.radiusX = obj.stixelSizePix/2;
+            spot.radiusY = obj.stixelSizePix/2;
+            spot.position = obj.canvasSize/2 + obj.position;
+            spot.orientation = 0;
+            spot.color = obj.color;
             
             % Add the stimulus to the presentation.
-            p.addStimulus(rect);
+            p.addStimulus(spot);
             
-            barVisible = stage.builtin.controllers.PropertyController(rect, 'visible', ...
+            spotVisible = stage.builtin.controllers.PropertyController(spot, 'visible', ...
                 @(state)state.time >= obj.preTime * 1e-3 && state.time < (obj.preTime + obj.stimTime) * 1e-3);
-            p.addController(barVisible);
+            p.addController(spotVisible);
         end
         
         function prepareEpoch(obj, epoch)
