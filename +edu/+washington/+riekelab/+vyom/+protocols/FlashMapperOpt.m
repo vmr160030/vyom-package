@@ -35,7 +35,8 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
 
-            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice('Optometer'));
+            % Show optometer reading which is bound to amp, in RigC ai0
+            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
             
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
             obj.gridWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gridWidth);
@@ -51,7 +52,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             disp(['Total number of positions: ' num2str(size(obj.positions,1))]);
             
             % Online analysis figures
-            % obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice(obj.amp));
+            
             
             % if ~strcmp(obj.onlineAnalysis, 'none')
             %     obj.showFigure('manookinlab.figures.MeanResponseFigure', ...
