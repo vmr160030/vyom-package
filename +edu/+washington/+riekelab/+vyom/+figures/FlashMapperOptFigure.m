@@ -14,23 +14,21 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
         heatmapHandle
         traces
         positions
-        posIdxMap
         xvals
         yvals
-        heatmapVals
+        peakMinusBaseline
         edgeChecks
-        legendEntries
-        sampleRate
+        positionList
     end
 
     methods
         function obj = FlashMapperOptFigure(device, varargin)
             ip = inputParser();
-            ip.addParameter('preTime', 250, @isnumeric);
-            ip.addParameter('stimTime', 500, @isnumeric);
-            ip.addParameter('tailTime', 500, @isnumeric);
-            ip.addParameter('stixelSize', 500, @isnumeric);
-            ip.addParameter('gridWidth', 2000, @isnumeric);
+            ip.addParameter('preTime', 0.0, @(x)isfloat(x));
+            ip.addParameter('stimTime', 0.0, @(x)isfloat(x));
+            ip.addParameter('tailTime', 0.0, @(x)isfloat(x));
+            ip.addParameter('stixelSize', 50.0, @(x)isfloat(x));
+            ip.addParameter('gridWidth', 300.0, @(x)isfloat(x));
             ip.parse(varargin{:});
 
             obj.device = device;
@@ -40,87 +38,108 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             obj.stixelSize = ip.Results.stixelSize;
             obj.gridWidth = ip.Results.gridWidth;
 
+            % Meshgrid for positions
             obj.edgeChecks = ceil(obj.gridWidth / obj.stixelSize);
             [obj.xvals, obj.yvals] = meshgrid( ...
                 linspace(-obj.stixelSize*obj.edgeChecks/2+obj.stixelSize/2, ...
                          obj.stixelSize*obj.edgeChecks/2-obj.stixelSize/2, ...
                          obj.edgeChecks));
             obj.positions = [obj.xvals(:), obj.yvals(:)];
-            obj.posIdxMap = containers.Map('KeyType','char','ValueType','int32');
+            obj.positionList = {};
             obj.traces = {};
-            obj.heatmapVals = nan(obj.edgeChecks, obj.edgeChecks);
-            obj.legendEntries = {};
+            obj.peakMinusBaseline = nan(obj.edgeChecks, obj.edgeChecks);
+
             obj.createUi();
         end
 
         function createUi(obj)
             % 2x1 grid: top for traces, bottom for heatmap
-            obj.axesHandles(1) = subplot(2,1,1, 'Parent', obj.figureHandle);
+            obj.axesHandles(1) = subplot(2,1,1, ...
+                'Parent', obj.figureHandle, ...
+                'FontUnits', get(obj.figureHandle, 'DefaultUicontrolFontUnits'), ...
+                'FontName', get(obj.figureHandle, 'DefaultUicontrolFontName'), ...
+                'FontSize', get(obj.figureHandle, 'DefaultUicontrolFontSize'));
             hold(obj.axesHandles(1), 'on');
-            ylabel(obj.axesHandles(1), 'Response');
-            title(obj.axesHandles(1), 'All traces by position');
-            obj.axesHandles(2) = subplot(2,1,2, 'Parent', obj.figureHandle);
-            obj.heatmapHandle = imagesc('Parent', obj.axesHandles(2), ...
-                'XData', unique(obj.xvals), 'YData', unique(obj.yvals), ...
-                'CData', obj.heatmapVals);
+            title(obj.axesHandles(1), 'Optometer traces by position');
+            xlabel(obj.axesHandles(1), 'Time (s)');
+            ylabel(obj.axesHandles(1), 'Optometer (mV)');
+
+            obj.axesHandles(2) = subplot(2,1,2, ...
+                'Parent', obj.figureHandle, ...
+                'FontUnits', get(obj.figureHandle, 'DefaultUicontrolFontUnits'), ...
+                'FontName', get(obj.figureHandle, 'DefaultUicontrolFontName'), ...
+                'FontSize', get(obj.figureHandle, 'DefaultUicontrolFontSize'));
+            obj.heatmapHandle = imagesc('XData', unique(obj.xvals), 'YData', unique(obj.yvals), ...
+                'CData', obj.peakMinusBaseline, 'Parent', obj.axesHandles(2));
             axis(obj.axesHandles(2), 'image');
             colorbar(obj.axesHandles(2));
-            xlabel(obj.axesHandles(2), 'X position (\mum)');
-            ylabel(obj.axesHandles(2), 'Y position (\mum)');
-            title(obj.axesHandles(2), 'Peak - baseline heatmap');
+            title(obj.axesHandles(2), 'Peak - Baseline Heatmap');
+            xlabel(obj.axesHandles(2), 'X Position (\mum)');
+            ylabel(obj.axesHandles(2), 'Y Position (\mum)');
         end
 
         function clear(obj)
             cla(obj.axesHandles(1));
             cla(obj.axesHandles(2));
             obj.traces = {};
-            obj.heatmapVals(:) = nan;
-            obj.legendEntries = {};
-            set(obj.heatmapHandle, 'CData', obj.heatmapVals);
+            obj.positionList = {};
+            obj.peakMinusBaseline(:) = nan;
+            set(obj.heatmapHandle, 'CData', obj.peakMinusBaseline);
         end
 
         function handleEpoch(obj, epoch)
             if ~epoch.hasResponse(obj.device)
                 return;
             end
+
             response = epoch.getResponse(obj.device);
-            [data, units] = response.getData();
-            obj.sampleRate = response.sampleRate.quantityInBaseUnits;
+            [quantities, units] = response.getData();
+            sampleRate = response.sampleRate.quantityInBaseUnits;
 
             % Get position
-            pos = epoch.parameters('position');
-            posKey = sprintf('%.1f,%.1f', pos(1), pos(2));
-            % Find index in grid
-            [~, idx] = min(sum((obj.positions - pos).^2,2));
-            [row, col] = ind2sub(size(obj.xvals), idx);
-
-            % Time vector
-            nPts = numel(data);
-            t = (0:nPts-1)/obj.sampleRate*1000; % ms
-
-            % Plot trace
-            color = lines(numel(obj.positions));
-            if ~isKey(obj.posIdxMap, posKey)
-                obj.posIdxMap(posKey) = length(obj.traces) + 1;
-                obj.legendEntries{end+1} = sprintf('(%g,%g)', pos(1), pos(2));
+            if isKey(epoch.parameters, 'position')
+                pos = epoch.parameters('position');
+            else
+                pos = [nan nan];
             end
-            traceIdx = obj.posIdxMap(posKey);
-            h = plot(obj.axesHandles(1), t, data, 'Color', color(traceIdx,:), 'DisplayName', obj.legendEntries{traceIdx});
-            obj.traces{traceIdx} = h;
 
-            % Compute baseline and peak
-            prePts = round(obj.preTime/1000 * obj.sampleRate);
+            % Store trace and position
+            obj.traces{end+1} = quantities;
+            obj.positionList{end+1} = pos;
+
+            % Plot all traces, color by position
+            cla(obj.axesHandles(1));
+            colors = lines(numel(obj.traces));
+            t = (0:numel(quantities)-1)/sampleRate;
+            legendEntries = {};
+            for k = 1:numel(obj.traces)
+                trace = obj.traces{k};
+                posk = obj.positionList{k};
+                plot(obj.axesHandles(1), t, trace, 'Color', colors(k,:), 'LineWidth', 1.2);
+                legendEntries{end+1} = sprintf('(%g, %g)', posk(1), posk(2));
+            end
+            legend(obj.axesHandles(1), legendEntries, 'Interpreter', 'none', 'Location', 'eastoutside');
+
+            % Calculate peak-baseline for this epoch
+            prePts = round(obj.preTime / 1e3 * sampleRate);
+            stimPts = round(obj.stimTime / 1e3 * sampleRate);
+            baseline = mean(quantities(1:prePts));
             stimStart = prePts + 1;
-            stimEnd = stimStart + round(obj.stimTime/1000 * obj.sampleRate) - 1;
-            baseline = mean(data(1:prePts));
-            peak = max(data(stimStart:stimEnd));
-            obj.heatmapVals(row, col) = peak - baseline;
+            stimEnd = prePts + stimPts;
+            if stimEnd > numel(quantities)
+                stimEnd = numel(quantities);
+            end
+            peak = max(quantities(stimStart:stimEnd));
+            pkbl = peak - baseline;
+
+            % Find grid index for this position
+            [~, idx] = min(sum((obj.positions - pos).^2, 2));
+            [row, col] = ind2sub(size(obj.xvals), idx);
+            obj.peakMinusBaseline(row, col) = pkbl;
 
             % Update heatmap
-            set(obj.heatmapHandle, 'CData', obj.heatmapVals);
-
-            % Update legend
-            legend(obj.axesHandles(1), obj.legendEntries, 'Interpreter', 'none', 'Location', 'bestoutside');
+            set(obj.heatmapHandle, 'CData', obj.peakMinusBaseline);
+            drawnow;
         end
     end
 end
