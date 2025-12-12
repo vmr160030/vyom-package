@@ -23,6 +23,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         position
         numChecks
         color
+        optometer
     end
     
     methods
@@ -74,6 +75,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             %         'stixelSize',obj.stixelSize,...
             %         'gridWidth',obj.gridWidth);
             % end
+            obj.optometer = edu.washington.riekelab.gamma.OptometerUDT350();
         end
         
         function p = createPresentation(obj)
