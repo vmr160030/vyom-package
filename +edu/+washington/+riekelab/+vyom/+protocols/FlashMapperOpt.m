@@ -75,7 +75,8 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             %         'stixelSize',obj.stixelSize,...
             %         'gridWidth',obj.gridWidth);
             % end
-            obj.optometer = edu.washington.riekelab.gamma.OptometerUDT350();
+            initialGain = 10^-2;
+            obj.optometer = edu.washington.riekelab.gamma.OptometerUDT350(initialGain);
         end
         
         function p = createPresentation(obj)

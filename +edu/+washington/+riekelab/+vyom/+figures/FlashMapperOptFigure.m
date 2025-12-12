@@ -103,6 +103,8 @@ function handleEpoch(obj, epoch)
 
             response = epoch.getResponse(obj.device);
             [quantities, units] = response.getData();
+            % Convert from mV to uW
+            quantities = obj.optometer.MICROWATT_PER_MILLIVOLT * obj.optometer.gain * quantities;
             sampleRate = response.sampleRate.quantityInBaseUnits;
 
             % Get position
