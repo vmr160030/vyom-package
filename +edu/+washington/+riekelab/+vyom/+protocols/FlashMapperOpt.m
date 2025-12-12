@@ -126,6 +126,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             disp(['Epoch ' num2str(obj.numEpochsCompleted+1) ': ' flashColor ' at position (' num2str(obj.position(1)) ', ' num2str(obj.position(2)) ')']);
             disp(['    Intensity: ' num2str(obj.intensity)]);
             disp(['    Color: '     num2str(obj.color)]);
+            epoch.addResponse(obj.rig.getDevice('Optometer'));
         end
         
         function tf = shouldContinuePreparingEpochs(obj)
