@@ -95,7 +95,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             set(obj.scatterHandle, 'XData', [], 'YData', [], 'CData', []);
         end
 
-function handleEpoch(obj, epoch)
+        function handleEpoch(obj, epoch)
             if ~epoch.hasResponse(obj.device)
                 disp('No response for this epoch, skipping.');
                 return;
