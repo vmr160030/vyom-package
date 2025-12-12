@@ -36,10 +36,13 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
 
+            initialGain = 10^-2;
+            obj.optometer = edu.washington.riekelab.gamma.OptometerUDT350(initialGain);
+
             % Show optometer reading
             % obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice('Optometer'));
             obj.showFigure('edu.washington.riekelab.vyom.figures.FlashMapperOptFigure', ...
-                obj.rig.getDevice('Optometer'), ... % obj.rig.getDevice(obj.amp), ...
+                obj.rig.getDevice('Optometer'), obj.optometer, ...
                 'preTime', obj.preTime, ...
                 'stimTime', obj.stimTime, ...
                 'tailTime', obj.tailTime, ...
@@ -75,8 +78,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
             %         'stixelSize',obj.stixelSize,...
             %         'gridWidth',obj.gridWidth);
             % end
-            initialGain = 10^-2;
-            obj.optometer = edu.washington.riekelab.gamma.OptometerUDT350(initialGain);
+            
         end
         
         function p = createPresentation(obj)

@@ -25,7 +25,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
     end
 
     methods
-        function obj = FlashMapperOptFigure(device, varargin)
+        function obj = FlashMapperOptFigure(device, optometer, varargin)
             ip = inputParser();
             ip.addParameter('preTime', 0.0, @(x)isfloat(x));
             ip.addParameter('stimTime', 0.0, @(x)isfloat(x));
@@ -35,6 +35,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             ip.parse(varargin{:});
 
             obj.device = device;
+            obj.optometer = optometer;
             obj.preTime = ip.Results.preTime;
             obj.stimTime = ip.Results.stimTime;
             obj.tailTime = ip.Results.tailTime;
