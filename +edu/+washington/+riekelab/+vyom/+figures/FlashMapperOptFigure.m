@@ -89,6 +89,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
 
         function handleEpoch(obj, epoch)
             if ~epoch.hasResponse(obj.device)
+                disp('No response for this epoch, skipping.');
                 return;
             end
 
