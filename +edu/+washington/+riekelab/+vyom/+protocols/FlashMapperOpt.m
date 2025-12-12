@@ -5,7 +5,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         preTime = 250                   % Stimulus leading duration (ms)
         stimTime = 500                  % Stimulus duration (ms)
         tailTime = 500                  % Stimulus trailing duration (ms)
-        gridWidth = 300                 % Width of mapping grid (microns)
+        gridWidth = 1000                 % Width of mapping grid (microns). Must be larger than stixelSize
         stixelSize = 500                 % Stixel edge size (microns)
         intensity = 1.0                  % Intensity (0 - 1)
         colorChannel = 0                  % Color channel (0 for achromatic, 1 for red, 2 for green, 3 for blue)
@@ -17,7 +17,6 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
     properties (Hidden)
         ampType
         onlineAnalysisType = symphonyui.core.PropertyType('char', 'row', {'none', 'extracellular', 'spikes_CClamp', 'subthresh_CClamp', 'analog'})
-        chromaticClassType = symphonyui.core.PropertyType('char','row',{'achromatic', 'BY', 'RG'})
         stixelSizePix
         gridWidthPix
         positions
