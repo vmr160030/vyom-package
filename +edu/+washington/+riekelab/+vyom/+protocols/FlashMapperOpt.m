@@ -8,7 +8,7 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         gridWidth = 300                 % Width of mapping grid (microns)
         stixelSize = 500                 % Stixel edge size (microns)
         intensity = 1.0                  % Intensity (0 - 1)
-        chromaticClass = 'achromatic'   % Chromatic type
+        colorChannel = 0                  % Color channel (0 for achromatic, 1 for red, 2 for green, 3 for blue)
         backgroundIntensity = 0      % Background light intensity (0-1)
         onlineAnalysis = 'extracellular' % Online analysis type.
         numberOfAverages = uint16(144)  % Number of epochs
@@ -35,6 +35,8 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareRun(obj)
             prepareRun@manookinlab.protocols.ManookinLabStageProtocol(obj);
+
+            obj.showFigure('symphonyui.builtin.figures.ResponseFigure', obj.rig.getDevice('Optometer'));
             
             obj.stixelSizePix = obj.rig.getDevice('Stage').um2pix(obj.stixelSize);
             obj.gridWidthPix = obj.rig.getDevice('Stage').um2pix(obj.gridWidth);
@@ -88,33 +90,23 @@ classdef FlashMapperOpt < manookinlab.protocols.ManookinLabStageProtocol
         
         function prepareEpoch(obj, epoch)
             prepareEpoch@manookinlab.protocols.ManookinLabStageProtocol(obj, epoch);
-            
-            % Check the chromatic class
-            if strcmp(obj.chromaticClass, 'BY') % blue-yellow
-                if obj.intensity > 0.5
-                    flashColor = 'blue';
-                    obj.color = [0,0,obj.intensity];
-                else
-                    flashColor = 'yellow';
-                    obj.color = [obj.intensity*ones(1,2),0];
-                end
-            elseif strcmp(obj.chromaticClass, 'RG') % red-green
-                if obj.intensity > 0.5
-                    flashColor = 'red';
-                    obj.color = [obj.intensity,0,0];
-                else
-                    flashColor = 'green';
-                    obj.color = [0,obj.intensity,0];
-                end
-            else
+
+            % Check colorChannel input
+            if obj.colorChannel == 0
+                flashColor = 'white';
                 obj.color = obj.intensity;
-                if obj.intensity > 0.5
-                    flashColor = 'white';
-                else
-                    flashColor = 'black';
-                end
+            elseif obj.colorChannel == 1
+                flashColor = 'red';
+                obj.color = [obj.intensity,0,0];
+            elseif obj.colorChannel == 2
+                flashColor = 'green';
+                obj.color = [0,obj.intensity,0];
+            elseif obj.colorChannel == 3
+                flashColor = 'blue';
+                obj.color = [0,0,obj.intensity];
+            else
+                error('Invalid color channel value. Must be 0 (achromatic), 1 (red), 2 (green), or 3 (blue).');
             end
-            
             obj.position = obj.positions(mod(obj.numEpochsCompleted,length(obj.positions))+1,:);
             
             epoch.addParameter('intensity', obj.intensity);
