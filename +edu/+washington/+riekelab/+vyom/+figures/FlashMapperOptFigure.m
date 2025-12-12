@@ -108,6 +108,8 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
 
             response = epoch.getResponse(obj.device);
             [quantities, units] = response.getData();
+            % V to mV
+            quantities = quantities * 1e3; 
             % Convert from mV to uW
             quantities = obj.optometer.MICROWATT_PER_MILLIVOLT * obj.optometer.gain * quantities;
             sampleRate = response.sampleRate.quantityInBaseUnits;
