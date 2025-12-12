@@ -69,7 +69,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             hold(obj.axesHandles(1), 'on');
             title(obj.axesHandles(1), 'Optometer traces by position');
             xlabel(obj.axesHandles(1), 'Time (s)');
-            ylabel(obj.axesHandles(1), 'Optometer (mV)');
+            ylabel(obj.axesHandles(1), 'Optometer (uW)');
 
             obj.axesHandles(2) = subplot(2,1,2, ...
                 'Parent', obj.figureHandle, ...
