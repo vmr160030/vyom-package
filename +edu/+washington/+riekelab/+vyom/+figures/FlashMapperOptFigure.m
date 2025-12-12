@@ -81,6 +81,9 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             title(obj.axesHandles(2), 'Peak - Baseline Spots');
             xlabel(obj.axesHandles(2), 'X Position (\mum)');
             ylabel(obj.axesHandles(2), 'Y Position (\mum)');
+            % Set xlim and ylim based on position grid
+            set(obj.axesHandles(2), 'XLim', [min(obj.xvals(:)) max(obj.xvals(:))]);
+            set(obj.axesHandles(2), 'YLim', [min(obj.yvals(:)) max(obj.yvals(:))]);
         end
 
         function clear(obj)
