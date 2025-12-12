@@ -1,6 +1,7 @@
 classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
     properties (SetAccess = private)
         device
+        optometer
         preTime
         stimTime
         tailTime
