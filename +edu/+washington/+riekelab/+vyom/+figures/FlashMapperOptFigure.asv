@@ -88,8 +88,8 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             xlabel(obj.axesHandles(2), 'X Position (\mum)');
             ylabel(obj.axesHandles(2), 'Y Position (\mum)');
             % Set xlim and ylim based on position grid
-            set(obj.axesHandles(2), 'XLim', [min(obj.xvals(:)) max(obj.xvals(:))]*obj.micronsPerPixel);
-            set(obj.axesHandles(2), 'YLim', [min(obj.yvals(:)) max(obj.yvals(:))]*obj.micronsPerPixel);
+            set(obj.axesHandles(2), 'XLim', [min(obj.xvals(:)) max(obj.xvals(:))]);
+            set(obj.axesHandles(2), 'YLim', [min(obj.yvals(:)) max(obj.yvals(:))]);
         end
 
         function clear(obj)
@@ -153,7 +153,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             if stimEnd > numel(quantities)
                 stimEnd = numel(quantities);
             end
-            peak = mean(quantities(stimStart+1000:stimEnd-1000));
+            peak = max(quantities(stimStart:stimEnd));
             pkbl = peak - baseline;
             disp(['Baseline: ', num2str(baseline), ' uW']);
             disp(['Peak: ', num2str(peak), ' uW']);
@@ -180,10 +180,10 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             output_struct.spotX = obj.spotX;
             output_struct.spotY = obj.spotY;
             output_struct.spotC = obj.spotC;
-            output_struct.traces = obj.traces;
-            
             % Save peak-baseline data
             save('C:\Users\Public\flash_mapper_data.mat', 'output_struct');
+
+            
         end
 
         % function savePeakBaselineData(obj, filename)
