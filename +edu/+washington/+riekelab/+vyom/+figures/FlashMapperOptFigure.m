@@ -177,31 +177,34 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             end
 
             drawnow;
+
+            % Save peak-baseline data
+            disp(epoch.fields);
         end
 
-        function savePeakBaselineData(obj, filename)
-            % Save peak, baseline, and position data to a .mat file
-            peak = obj.spotC(:); % peak-baseline values
-            baseline = nan(numel(obj.spotC),1);
-            peakVal = nan(numel(obj.spotC),1);
-            position = nan(numel(obj.spotC),2);
+        % function savePeakBaselineData(obj, filename)
+        %     % Save peak, baseline, and position data to a .mat file
+        %     peak = obj.spotC(:); % peak-baseline values
+        %     baseline = nan(numel(obj.spotC),1);
+        %     peakVal = nan(numel(obj.spotC),1);
+        %     position = nan(numel(obj.spotC),2);
 
-            for k = 1:numel(obj.spotC)
-                trace = obj.traces{k};
-                pos = obj.positionList{k};
-                % Recompute baseline and peak for each trace
-                sampleRate = numel(trace) / ((obj.preTime + obj.stimTime + obj.tailTime)/1e3);
-                prePts = round(obj.preTime / 1e3 * sampleRate);
-                stimPts = round(obj.stimTime / 1e3 * sampleRate);
-                baseline(k) = mean(trace(1:prePts));
-                stimStart = prePts + 1;
-                stimEnd = min(prePts + stimPts, numel(trace));
-                peakVal(k) = max(trace(stimStart:stimEnd));
-                position(k,:) = pos;
-            end
+        %     for k = 1:numel(obj.spotC)
+        %         trace = obj.traces{k};
+        %         pos = obj.positionList{k};
+        %         % Recompute baseline and peak for each trace
+        %         sampleRate = numel(trace) / ((obj.preTime + obj.stimTime + obj.tailTime)/1e3);
+        %         prePts = round(obj.preTime / 1e3 * sampleRate);
+        %         stimPts = round(obj.stimTime / 1e3 * sampleRate);
+        %         baseline(k) = mean(trace(1:prePts));
+        %         stimStart = prePts + 1;
+        %         stimEnd = min(prePts + stimPts, numel(trace));
+        %         peakVal(k) = max(trace(stimStart:stimEnd));
+        %         position(k,:) = pos;
+        %     end
 
-            save(filename, 'peak', 'baseline', 'peakVal', 'position');
-            disp(['Saved peak, baseline, and position data to ' filename]);
-        end
+        %     save(filename, 'peak', 'baseline', 'peakVal', 'position');
+        %     disp(['Saved peak, baseline, and position data to ' filename]);
+        % end
     end
 end
