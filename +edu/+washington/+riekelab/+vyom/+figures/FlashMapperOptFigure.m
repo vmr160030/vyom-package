@@ -153,6 +153,9 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             end
             peak = max(quantities(stimStart:stimEnd));
             pkbl = peak - baseline;
+            disp(['Baseline: ', num2str(baseline), ' uW']);
+            disp(['Peak: ', num2str(peak), ' uW']);
+            disp(['Peak-baseline: ', num2str(pkbl), ' uW']);
 
             % Store spot data
             obj.spotX(end+1) = pos(1);
