@@ -3,6 +3,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
         device
         optometer
         micronsPerPixel
+        canvasSize
         preTime
         stimTime
         tailTime
@@ -27,7 +28,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
     end
 
     methods
-        function obj = FlashMapperOptFigure(device, optometer, micronsPerPixel, varargin)
+        function obj = FlashMapperOptFigure(device, optometer, micronsPerPixel, canvasSize, varargin)
             ip = inputParser();
             ip.addParameter('preTime', 0.0, @(x)isfloat(x));
             ip.addParameter('stimTime', 0.0, @(x)isfloat(x));
@@ -39,6 +40,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
             obj.device = device;
             obj.optometer = optometer;
             obj.micronsPerPixel = micronsPerPixel;
+            obj.canvasSize = canvasSize;
             obj.preTime = ip.Results.preTime;
             obj.stimTime = ip.Results.stimTime;
             obj.tailTime = ip.Results.tailTime;
@@ -51,7 +53,7 @@ classdef FlashMapperOptFigure < symphonyui.core.FigureHandler
                 linspace(-obj.stixelSize*obj.edgeChecks/2+obj.stixelSize/2, ...
                          obj.stixelSize*obj.edgeChecks/2-obj.stixelSize/2, ...
                          obj.edgeChecks));
-            obj.positions = [obj.xvals(:), obj.yvals(:)];
+            obj.positions = [obj.xvals(:), obj.yvals(:)] + obj.canvasSize/2;
             obj.positionList = {};
             obj.traces = {};
             obj.peakMinusBaseline = nan(obj.edgeChecks, obj.edgeChecks);
